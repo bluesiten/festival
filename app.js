@@ -77,7 +77,6 @@ function filtered() {
     if (state.theme && !f._themes.includes(state.theme)) return false;
     if (state.period === 'now' && !overlaps(f, TODAY, TODAY)) return false;
     if (state.period === 'week' && !overlaps(f, TODAY, WEEK_END)) return false;
-    if (state.period === 'weekend' && !overlaps(f, WKND[0], WKND[1])) return false;
     if (state.period === 'nextweek' && !overlaps(f, NEXT_WEEK[0], NEXT_WEEK[1])) return false;
     if (state.period === 'month' && !overlaps(f, TODAY, MONTH_END)) return false;
     if (state.period === 'nextmonth' && !overlaps(f, NEXT_MONTH[0], NEXT_MONTH[1])) return false;
@@ -90,8 +89,12 @@ function filtered() {
 function renderHero() {
   const score = f => (f.image ? 4 : 0) + (f.overview ? 2 : 0) - (diffDays(f.start, f.end) > 30 ? 3 : 0) - (isLong(f) ? 5 : 0)
     + (/축제|페스티벌|대전|박람회|야행/.test(f.title) ? 1.5 : 0)
-    + (f.start >= TODAY ? 1 : 0) - diffDays(TODAY, f.start > TODAY ? f.start : TODAY) * 0.1;
-  const picks = ALL.filter(f => overlaps(f, TODAY, WEEK_END)).sort((a, b) => score(b) - score(a)).slice(0, 8);
+    - diffDays(TODAY, f.start > TODAY ? f.start : TODAY) * 0.1;
+  // 진행 중 주요 축제(최대 5) + 이번 주 시작 예정(나머지) → 진행 중(끝나는 순) → D-1 → D-2 … 순서
+  const pool = ALL.filter(f => overlaps(f, TODAY, WEEK_END) && !isLong(f)).sort((a, b) => score(b) - score(a));
+  const live = pool.filter(f => f.start <= TODAY).slice(0, 5);
+  const next = pool.filter(f => f.start > TODAY).slice(0, 10 - live.length);
+  const picks = [...live.sort((a, b) => a.end.localeCompare(b.end)), ...next.sort((a, b) => a.start.localeCompare(b.start))];
   $('#weekRange').textContent = `THIS WEEK · ${md(TODAY)} – ${md(WEEK_END)}`;
   $('#heroTrack').innerHTML = picks.map(f => {
     const st = status(f), im = imgStyle(f, true);
