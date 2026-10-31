@@ -112,3 +112,4 @@ dialog::backdrop{background:rgba(20,20,25,.45)}
 .d-btns a.primary{background:var(--ink);color:#fff;grid-column:1/-1}
 .foot{max-width:1240px;margin:0 auto;padding:10px 20px 40px;font-size:12px;color:var(--sub);line-height:1.6}
 .credit{font-size:12px;color:var(--sub);margin:0 0 4px}.credit a{color:var(--sub)}
+.ai{position:absolute;right:6px;bottom:6px;font-size:10px;font-weight:700;padding:2px 5px;border-radius:5px;background:rgba(0,0,0,.5);color:#fff}

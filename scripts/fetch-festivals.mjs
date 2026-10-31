@@ -3,6 +3,7 @@
 // GitHub Actions에서 매일 자동 실행됩니다 (.github/workflows/update.yml)
 
 import fs from 'node:fs/promises';
+import path from 'node:path';
 
 const BASE = 'https://apis.data.go.kr/B551011/KorService2';
 let KEY = process.env.TOURAPI_KEY || '';
@@ -175,8 +176,8 @@ try {
 //    ③ Wikimedia Commons (CC0·퍼블릭도메인·CC BY/BY-SA, 저작자 표기)
 //    → 못 찾으면 색 블록. 네이버 등 일반 검색 이미지는 쓰지 않음
 // ─────────────────────────────────────────────
-const IMG_VER = 'v3';
-let galleryOn = true, hits = { tour: 0, gallery: 0, commons: 0 }, searched = 0;
+const IMG_VER = 'v4';
+let aiCount = 0, galleryOn = true, hits = { tour: 0, gallery: 0, commons: 0 }, searched = 0;
 const shortName = t => t.replace(/\(.*?\)|\[.*?\]|「.*?」|〈.*?〉/g, '').replace(/제?\s*\d+\s*회|\d{4}년?/g, '').replace(/\s+/g, ' ').trim();
 const related = (cand, k) => { const c = norm(cand); return k.length >= 3 && c.length >= 2 && (c.includes(k) || (c.length >= 3 && k.includes(c))); };
 
@@ -187,8 +188,8 @@ async function tourImage(keyword, label) {
   return hit ? { image: hit.firstimage, thumb: hit.firstimage2 || hit.firstimage,
     imageSource: label, imageLicense: '공공누리', imageLink: '' } : null;
 }
-async function galleryImage(keyword, label) {
-  const k = norm(keyword); if (!galleryOn || k.length < 3) return null;
+async function galleryList(keyword) {
+  if (!galleryOn || !keyword) return [];
   const qs = new URLSearchParams({ serviceKey: KEY, MobileOS: 'ETC', MobileApp: 'FestivalMap', _type: 'json',
     keyword, numOfRows: '10', pageNo: '1', arrange: 'A' });
   const text = await (await fetch('https://apis.data.go.kr/B551011/PhotoGalleryService1/gallerySearchList1?' + qs)).text();
@@ -198,11 +199,71 @@ async function galleryImage(keyword, label) {
     errs.gallery = text.replace(KEY, '***').slice(0, 200);
     galleryOn = false;
     console.warn('관광사진갤러리 사용 불가(활용신청 필요할 수 있음):', (code || '') + ' ' + text.slice(0, 120));
-    return null;
+    return [];
   }
-  const hit = items(json.response.body).find(x => x.galWebImageUrl && (related(x.galTitle, k) || related(x.galSearchKeyword || '', k)));
-  return hit ? { image: hit.galWebImageUrl, thumb: hit.galWebImageUrl,
-    imageSource: label + (hit.galPhotographer ? ` · 촬영 ${hit.galPhotographer}` : ''), imageLicense: '공공누리', imageLink: '' } : null;
+  return items(json.response.body).filter(x => x.galWebImageUrl);
+}
+const galHit = (x, label) => ({ image: x.galWebImageUrl, thumb: x.galWebImageUrl,
+  imageSource: label + (x.galPhotographer ? ` · 촬영 ${x.galPhotographer}` : ''), imageLicense: '공공누리', imageLink: '' });
+async function galleryImage(keyword, label) {
+  const k = norm(keyword); if (!galleryOn || k.length < 3) return null;
+  const hit = (await galleryList(keyword)).find(x => x.galWebImageUrl && (related(x.galTitle, k) || related(x.galSearchKeyword || '', k)));
+  return hit ? galHit(hit, label) : null;
+}
+
+// 제목에서 의미 있는 단어 뽑기: '2026 보은대추축제' → ['보은대추'], '당진 삽교호 드론 라이트 쇼' → ['삽교호','라이트','드론','당진']
+const GENERIC = /(축제|페스티벌|페스타|문화제|대축제|행사|대회|박람회|한마당|전시회|전시|공연|특별|기획|기념|주말|시즌\d*|in|the|festival|일원|개최|체험|프로그램|시민|가족|우리|함께|하는|있는|날)/gi;
+const titleTokens = t => [...new Set(shortName(t).replace(/[^가-힣a-zA-Z0-9 ]/g, ' ').split(/\s+/)
+  .map(w => w.replace(GENERIC, '')).filter(w => w.length >= 2 && !/^\d+$/.test(w)))].sort((a, b) => b.length - a.length).slice(0, 4);
+// 주소에서 시·군·구 이름: '충청남도 당진시 ...' → '당진'
+const cityOf = f => {
+  const parts = (f.addr || '').split(/\s+/);
+  const c = parts.find((w, i) => i > 0 && /[시군구]$/.test(w) && w.length >= 2) || parts[0] || '';
+  return c.replace(/(특별자치시|특별자치도|특별시|광역시|자치시|시|군|구)$/, '');
+};
+async function relatedPhoto(f) {                  // 제목 단어로 찾은 사진(같은 지역 우선)
+  const city = cityOf(f);
+  for (const tok of titleTokens(f.title)) {
+    if (tok === city) continue;
+    const list = (await galleryList(tok)).filter(x => related(x.galTitle + ' ' + (x.galSearchKeyword || ''), norm(tok)) || norm(x.galSearchKeyword || '').includes(norm(tok)));
+    const local = list.find(x => city && (x.galPhotographyLocation || '').includes(city));
+    const pick = local || (tok.length >= 3 ? list[0] : null);
+    if (pick) return galHit(pick, '제목 관련 사진 · 한국관광공사 관광사진갤러리');
+  }
+  return null;
+}
+async function regionPhoto(f) {                   // 시·군 대표 풍경
+  const city = cityOf(f); if (!city || city.length < 2) return null;
+  const list = await galleryList(city);
+  const pick = list.find(x => (x.galPhotographyLocation || '').includes(city)) || list.find(x => (x.galSearchKeyword || '').includes(city));
+  return pick ? galHit(pick, `지역 사진(${city}) · 한국관광공사 관광사진갤러리`) : null;
+}
+
+// 마지막 수단: AI 이미지 생성(무료 Pollinations) → images/ai/에 저장
+const AI_HINTS = [[/국화/, 'chrysanthemum flower displays'], [/단풍|가을/, 'autumn maple leaves'], [/벚꽃/, 'cherry blossoms'], [/억새|갈대/, 'silver grass fields'],
+  [/꽃|정원/, 'colorful flower garden'], [/사과/, 'red apples and orchard stalls'], [/감귤|귤/, 'tangerine orchard'], [/대추/, 'jujube harvest market'],
+  [/김장|김치/, 'people making kimchi together'], [/한우|고기|바비큐|숯불/, 'grilled beef food stalls'], [/수산|어부|항|고등어|과메기|대게|굴/, 'seafood market by a harbor'],
+  [/불꽃/, 'fireworks over water'], [/드론/, 'drone light show in the night sky'], [/빛|야간|야행|달빛|밤|등/, 'glowing lanterns at night'],
+  [/재즈|음악|뮤직|버스킹|콘서트/, 'outdoor live music stage'], [/댄스|춤/, 'street dance performance'], [/연극|극/, 'open-air theater stage'],
+  [/책|도서|문학/, 'outdoor book fair'], [/커피/, 'coffee street festival'], [/맥주/, 'beer festival tables'], [/산타|크리스마스/, 'christmas village with snow'],
+  [/해맞이|일출|해넘이/, 'sunrise over the sea'], [/눈|얼음|겨울|빙어/, 'snowy winter festival'], [/도자기|분청/, 'pottery making stalls'],
+  [/전통|민속|농악|궁|관아|유산|역사/, 'traditional Korean performance with hanbok'], [/라면|먹거리|음식|맛/, 'street food stalls'],
+  [/미술|아트|비엔날레|일러스트/, 'outdoor art exhibition'], [/도보|걷기|투어|올레|산책/, 'people on a scenic walking trail'], [/농업|농식품|장터|시장/, 'local farmers market']];
+async function aiImage(f) {
+  const hint = (AI_HINTS.find(([re]) => re.test(f.title + ' ' + (f.overview || '').slice(0, 80))) || [, 'a lively local festival with food stalls and paper lanterns'])[1];
+  const prompt = `Warm editorial photo-illustration of ${hint}, local festival in South Korea, cheerful visitors, soft natural light, no text, no letters, no signs, no logos`;
+  const seed = [...f.id].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7) % 100000;
+  const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=1024&height=640&nologo=true&seed=${seed}&model=flux`;
+  const res = await fetch(url, { signal: AbortSignal.timeout(120000) });
+  const type = res.headers.get('content-type') || '';
+  if (!res.ok || !type.startsWith('image/')) throw new Error('AI 이미지 ' + res.status + ' ' + type);
+  const buf = Buffer.from(await res.arrayBuffer());
+  if (buf.length < 15000) throw new Error('AI 이미지가 너무 작음');
+  const file = `images/ai/${f.id.replace(/[^a-z0-9-]/gi, '')}.jpg`;
+  const abs = new URL('../' + file, import.meta.url);
+  await fs.mkdir(path.dirname(abs.pathname), { recursive: true });
+  await fs.writeFile(abs, buf);
+  return { image: file, thumb: file, imageSource: 'AI 생성 이미지', imageLicense: '', imageLink: '' };
 }
 async function commonsImage(keyword, label) {
   const k = norm(keyword); if (k.length < 3) return null;
@@ -250,12 +311,15 @@ for (const f of out) {
         || await safe(commonsImage, place, '개최 장소 사진 · Wikimedia Commons');
       if (hit) hits[/Commons/.test(hit.imageSource) ? 'commons' : /갤러리/.test(hit.imageSource) ? 'gallery' : 'tour']++;
     }
+    if (!hit) { hit = await safe(relatedPhoto, f); if (hit) hits.related = (hits.related || 0) + 1; }
+    if (!hit) { hit = await safe(regionPhoto, f); if (hit) hits.region = (hits.region || 0) + 1; }
+    if (!hit && aiCount < 40) { aiCount++; hit = await safe(aiImage, f); if (hit) hits.ai = (hits.ai || 0) + 1; }
     if (hit) Object.assign(f, hit);
-    f.imageChecked = IMG_VER + (galleryOn ? 'g' : '');
+    if (hit || galleryOn) f.imageChecked = IMG_VER + (galleryOn ? 'g' : '');
   } catch (e) { console.warn('이미지 검색 실패', f.title, e.message); }
 }
 if (Object.keys(errs).length) console.warn('이미지 검색 오류:', JSON.stringify(errs));
-console.log(`이미지 검색 ${searched}건 → 관광공사 ${hits.tour}, 관광사진갤러리 ${hits.gallery}, 위키미디어 ${hits.commons}`);
+console.log('이미지 검색', searched, JSON.stringify(hits));
 
 out.sort((a, b) => a.start.localeCompare(b.start));
 await fs.writeFile(OUT, JSON.stringify({

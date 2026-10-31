@@ -24,6 +24,6 @@ jobs:
         run: |
           git config user.name "festival-bot"
           git config user.email "actions@users.noreply.github.com"
-          git add data/festivals.json
+          git add data images 2>/dev/null || git add data
           git diff --staged --quiet || git commit -m "축제 데이터 갱신 $(date +%F)"
           git push
