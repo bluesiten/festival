@@ -116,11 +116,20 @@ let current = [];
 const mapVisible = () => { const el = $('#map'); return el && el.offsetWidth > 0 && el.offsetHeight > 0; };
 function ensureMap() {
   if (map || !mapVisible()) return !!map;
-  if (!window.L) { $('#map').innerHTML = '<div class="nomap">지도를 불러오지 못했어요.</div>'; return false; }
+  if (!window.L) { $('#map').innerHTML = '<div class="nomap"><b>지도를 불러오지 못했어요</b>새로고침하거나 잠시 후 다시 열어 주세요.</div>'; return false; }
   map = L.map('map', { zoomControl: false, minZoom: 6, maxBounds: [[32, 123], [39.8, 133]] }).setView([36.2, 127.8], 7);
   L.control.zoom({ position: 'bottomright' }).addTo(map);
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { subdomains: 'abcd', maxZoom: 19,
+  const carto = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { subdomains: 'abcd', maxZoom: 19,
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>' }).addTo(map);
+  let fails = 0, loaded = 0;
+  carto.on('tileload', () => loaded++);
+  carto.on('tileerror', () => {                    // 지도 배경이 안 오면 OpenStreetMap으로 교체
+    if (++fails === 4 && loaded === 0) {
+      map.removeLayer(carto);
+      L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19,
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>' }).addTo(map);
+    }
+  });
   cluster = L.markerClusterGroup ? L.markerClusterGroup({ showCoverageOnHover: false, maxClusterRadius: 50, spiderfyDistanceMultiplier: 1.6,
     iconCreateFunction: c => L.divIcon({ className: '', html: `<div class="cl">${c.getChildCount()}</div>`, iconSize: [46, 46] }) }) : L.layerGroup();
   map.addLayer(cluster);
@@ -128,6 +137,8 @@ function ensureMap() {
 }
 function renderMap(items, fit = true) {
   current = items;
+  const n = items.filter(f => f.lat && f.lng).length;
+  $('#mapCount').textContent = `${n}곳 표시 중`;
   if (!ensureMap()) return;
   cluster.clearLayers(); markers.clear();
   const pts = [];
@@ -179,17 +190,7 @@ function update() { const items = sorted(filtered()); renderList(items); renderM
 let t; $('#q').addEventListener('input', e => { clearTimeout(t); t = setTimeout(() => { state.q = e.target.value; update(); }, 150); });
 $('#region').addEventListener('change', e => { state.region = e.target.value; update(); });
 $('#period').addEventListener('change', e => { state.period = e.target.value; update(); });
-const fab = $('#fab');
-fab.addEventListener('click', () => {
-  const toMap = $('main').dataset.view !== 'map';
-  $('main').dataset.view = toMap ? 'map' : 'list';
-  fab.querySelector('span').textContent = toMap ? '목록 보기' : '지도 보기';
-  fab.setAttribute('aria-label', toMap ? '목록 보기' : '지도 보기');
-  const y = $('#controls').getBoundingClientRect().top + scrollY;
-  if (toMap) scrollTo(0, y);
-  requestAnimationFrame(() => { if (ensureMap()) { map.invalidateSize(); renderMap(current); } });
-});
-addEventListener('resize', () => { if (ensureMap()) { map.invalidateSize(); } else renderMap(current); });
+addEventListener('resize', () => { if (map) map.invalidateSize(); });
 
 // ── 시작 ──
 fetch('data/festivals.json', { cache: 'no-cache' }).then(r => r.json()).then(data => {

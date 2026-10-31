@@ -31,6 +31,11 @@
   <div class="hero-track" id="heroTrack"></div>
 </section>
 
+<section class="mapsec" aria-label="축제 지도">
+  <div class="sec-head"><h2>지도에서 찾기</h2><span id="mapCount"></span></div>
+  <div id="map"></div>
+</section>
+
 <section class="controls" id="controls">
   <div class="search">
     <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
@@ -51,15 +56,9 @@
 
 <div class="viewbar"><span id="count"></span></div>
 
-<main class="body" data-view="list">
+<main class="body">
   <ul class="list" id="list"></ul>
-  <div class="mapwrap"><div id="map"></div></div>
 </main>
-
-<button class="fab" id="fab" type="button" aria-label="지도 보기">
-  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2Z"/><path d="M9 4v14M15 6v14"/></svg>
-  <span>지도 보기</span>
-</button>
 
 <dialog id="detail"></dialog>
 
@@ -69,6 +68,7 @@
 </footer>
 
 <script src="vendor/leaflet.js"></script>
+<script>window.L || document.write('<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"><\/script>')</script>
 <script src="vendor/leaflet.markercluster.js"></script>
 <script src="app.js"></script>
 </body>

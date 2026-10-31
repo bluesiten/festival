@@ -70,7 +70,7 @@ button{cursor:pointer}
 #count b{color:var(--ink);font-weight:800}
 
 /* list */
-.body{max-width:1280px;margin:0 auto;padding:0 20px 110px}
+.body{max-width:1280px;margin:0 auto;padding:0 20px 40px}
 .list{list-style:none;margin:0;padding:0;display:grid;gap:10px}
 .item{display:flex;gap:14px;background:var(--card);border-radius:var(--r);padding:10px;box-shadow:var(--shadow);cursor:pointer;align-items:center;transition:transform .15s ease}
 .item:active{transform:scale(.985)}
@@ -87,19 +87,16 @@ button{cursor:pointer}
 .ai{position:absolute;right:6px;bottom:6px;font-size:10px;font-weight:700;padding:2px 5px;border-radius:5px;background:rgba(0,0,0,.5);color:#fff}
 .empty{text-align:center;color:var(--sub);padding:48px 0;line-height:1.6}
 
-/* map */
-.mapwrap{display:none}
-#map{height:calc(100dvh - 250px);min-height:420px;border-radius:22px;overflow:hidden;box-shadow:var(--shadow);background:#e8ecef;z-index:1}
-.body[data-view=map] .list{display:none}
-.body[data-view=map] .mapwrap{display:block}
-.nomap{display:flex;align-items:center;justify-content:center;height:100%;color:var(--sub);font-size:14px}
-@media(min-width:900px){
-  .fab{display:none!important}
-  .body{display:grid;grid-template-columns:440px 1fr;gap:20px;align-items:start;padding-bottom:40px}
-  .body .list,.body[data-view=map] .list{display:grid;max-height:calc(100dvh - 200px);overflow:auto;padding:2px 6px 2px 2px}
-  .body .mapwrap,.body[data-view=map] .mapwrap{display:block;position:sticky;top:150px}
-  #map{height:calc(100dvh - 200px)}
-}
+/* map section */
+.mapsec{max-width:1280px;margin:0 auto;padding:4px 20px 18px}
+.sec-head{display:flex;align-items:baseline;justify-content:space-between;margin:0 0 10px}
+.sec-head h2{margin:0;font-size:19px;font-weight:800;letter-spacing:-.03em}
+#mapCount{font-size:13px;color:var(--sub)}
+#map{height:min(62vh,560px);min-height:360px;border-radius:22px;overflow:hidden;box-shadow:var(--shadow);background:#e8ecef;z-index:1}
+@media(min-width:900px){#map{height:540px}}
+.nomap{display:flex;flex-direction:column;gap:6px;align-items:center;justify-content:center;height:100%;color:var(--sub);font-size:14px;text-align:center;padding:20px}
+@media(min-width:760px){.list{grid-template-columns:repeat(2,1fr)}}
+@media(min-width:1100px){.list{grid-template-columns:repeat(3,1fr)}}
 
 /* photo pins */
 .ppin{width:44px;height:44px;border-radius:50%;background:#fff;padding:3px;box-shadow:0 4px 12px rgba(0,0,0,.25);position:relative;transition:transform .15s}
@@ -118,12 +115,6 @@ button{cursor:pointer}
 .pop span{font-size:12.5px;color:var(--sub)}
 .pop button{display:block;width:100%;margin-top:9px;border:0;background:var(--ink);color:#fff;border-radius:10px;padding:8px;font-size:13px;font-weight:600}
 
-/* floating map button (mobile) */
-.fab{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:900;display:flex;align-items:center;gap:8px;
-  height:50px;padding:0 22px;border:0;border-radius:999px;background:var(--ink);color:#fff;font-size:15px;font-weight:700;box-shadow:0 8px 24px rgba(0,0,0,.28)}
-.fab svg{width:19px;height:19px;fill:none;stroke:#fff;stroke-width:2;stroke-linejoin:round}
-.fab:active{transform:translateX(-50%) scale(.96)}
-
 /* detail */
 dialog{border:0;padding:0;width:min(560px,100%);max-height:92dvh;border-radius:24px;box-shadow:0 20px 60px rgba(0,0,0,.25);background:#fff}
 dialog::backdrop{background:rgba(20,18,16,.5);backdrop-filter:blur(2px)}
@@ -140,6 +131,6 @@ dialog::backdrop{background:rgba(20,18,16,.5);backdrop-filter:blur(2px)}
 .d-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .d-btns a{display:flex;align-items:center;justify-content:center;height:48px;border-radius:14px;text-decoration:none;font-weight:700;font-size:15px;background:var(--bg);color:var(--ink)}
 .d-btns a.primary{background:var(--ink);color:#fff;grid-column:1/-1}
-.foot{max-width:1280px;margin:0 auto;padding:0 20px 100px;font-size:12px;color:var(--sub);line-height:1.7}
-@media(min-width:900px){.foot{padding-bottom:40px}}
-@media(max-width:899px){main[data-view=map] ~ .foot{display:none}}
+.foot{max-width:1280px;margin:0 auto;padding:0 20px 40px;font-size:12px;color:var(--sub);line-height:1.7}
+
+
