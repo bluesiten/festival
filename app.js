@@ -16,7 +16,9 @@ const span = f => f.start === f.end ? md(f.start) : `${md(f.start)} ~ ${md(f.end
 const diffDays = (a, b) => Math.round((Date.UTC(b.slice(0,4), b.slice(4,6)-1, b.slice(6)) - Date.UTC(a.slice(0,4), a.slice(4,6)-1, a.slice(6))) / 86400e3);
 const overlaps = (f, a, b) => f.start <= b && f.end >= a;
 
+const isLong = f => diffDays(f.start, f.end) > 45;
 function status(f) {
+  if (isLong(f) && f.start <= TODAY) return { cls: 'later', label: '상시' };
   if (f.start <= TODAY && f.end >= TODAY) {
     const left = diffDays(TODAY, f.end);
     return { cls: 'live', label: left === 0 ? '오늘 마감' : '진행 중' };
@@ -29,7 +31,16 @@ function status(f) {
 const REGION = [['서울','서울'],['부산','부산'],['대구','대구'],['인천','인천'],['광주','광주'],['대전','대전'],['울산','울산'],['세종','세종'],
   ['경기','경기'],['강원','강원'],['충청북','충북'],['충북','충북'],['충청남','충남'],['충남','충남'],['전라북','전북'],['전북','전북'],
   ['전라남','전남'],['전남','전남'],['경상북','경북'],['경북','경북'],['경상남','경남'],['경남','경남'],['제주','제주']];
-const regionOf = f => (REGION.find(([k]) => (f.region || f.addr || '').startsWith(k)) || [, '기타'])[1];
+const CITY = {영주:'경북',포항:'경북',경주:'경북',안동:'경북',구미:'경북',청송:'경북',통영:'경남',창원:'경남',김해:'경남',진주:'경남',
+  수원:'경기',고양:'경기',성남:'경기',용인:'경기',춘천:'강원',강릉:'강원',원주:'강원',청주:'충북',충주:'충북',천안:'충남',공주:'충남',
+  전주:'전북',군산:'전북',여수:'전남',순천:'전남',목포:'전남'};
+const regionOf = f => {
+  const a = (f.addr || f.region || '').trim();
+  const r = REGION.find(([k]) => a.startsWith(k));
+  if (r) return r[1];
+  const c = Object.keys(CITY).find(k => a.startsWith(k));
+  return c ? CITY[c] : '기타';
+};
 const THEMES = [
   ['꽃·자연', /꽃|국화|벚꽃|장미|튤립|억새|단풍|코스모스|수국|유채|핑크뮬리|정원|숲/],
   ['먹거리', /먹거리|음식|맛|한우|김치|김장|과메기|대게|전어|굴|떡|막걸리|와인|맥주|커피|빵|사과|감귤|딸기|인삼|홍삼|고추|쌀|한과|곶감|축산|수산/],
@@ -70,7 +81,8 @@ function filtered() {
 
 // ── 상단: 이번 주 주요 축제 ──
 function renderHero() {
-  const score = f => (f.image ? 4 : 0) + (f.overview ? 2 : 0) - (diffDays(f.start, f.end) > 30 ? 3 : 0)
+  const score = f => (f.image ? 4 : 0) + (f.overview ? 2 : 0) - (diffDays(f.start, f.end) > 30 ? 3 : 0) - (isLong(f) ? 5 : 0)
+    + (/축제|페스티벌|대전|박람회|야행/.test(f.title) ? 1.5 : 0)
     + (f.start >= TODAY ? 1 : 0) - diffDays(TODAY, f.start > TODAY ? f.start : TODAY) * 0.1;
   const picks = ALL.filter(f => overlaps(f, TODAY, WEEK_END)).sort((a, b) => score(b) - score(a)).slice(0, 8);
   $('#weekRange').textContent = `${md(TODAY)} ~ ${md(WEEK_END)}`;
@@ -147,7 +159,11 @@ document.addEventListener('click', e => {
 });
 
 // ── 이벤트 ──
-function update() { const items = filtered(); renderList(items); renderMap(items); }
+function sorted(items) {
+  const key = f => (isLong(f) ? '1' : '0') + (f.start < TODAY ? TODAY : f.start) + f.end;
+  return items.sort((a, b) => key(a).localeCompare(key(b)));
+}
+function update() { const items = sorted(filtered()); renderList(items); renderMap(items); }
 let t; $('#q').addEventListener('input', e => { clearTimeout(t); t = setTimeout(() => { state.q = e.target.value; update(); }, 150); });
 $('#region').addEventListener('change', e => { state.region = e.target.value; update(); });
 $('#period').addEventListener('change', e => { state.period = e.target.value; update(); });
