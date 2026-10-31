@@ -111,17 +111,41 @@ function renderList(items) {
   }).join('') : '<li class="empty">조건에 맞는 축제가 없어요.<br>기간이나 지역을 넓혀 보세요.</li>';
 }
 
-// ── 지도 (OpenStreetMap) ──
+// ── 지도 ──
+// 배경: OpenFreeMap 'Positron'(키 불필요, 단순한 회색톤 벡터 지도, 한글 지명)
+//       실패하면 OpenStreetMap 기본 지도로 자동 전환
+const OSM_ATTR = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
+function setBaseMap() {
+  let done = false;
+  const osm = () => {
+    if (done) return; done = true;
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, className: 'osm-tiles', attribution: OSM_ATTR }).addTo(map);
+  };
+  if (!window.maplibregl || !L.maplibreGL) return osm();
+  try {
+    const layer = L.maplibreGL({ style: 'https://tiles.openfreemap.org/styles/positron',
+      attribution: '<a href="https://openfreemap.org" target="_blank">OpenFreeMap</a> ' + OSM_ATTR }).addTo(map);
+    const gl = layer.getMaplibreMap();
+    const timer = setTimeout(() => { if (!gl.isStyleLoaded()) { map.removeLayer(layer); osm(); } }, 8000);
+    gl.on('load', () => {
+      done = true; clearTimeout(timer);
+      for (const ly of gl.getStyle().layers) {        // 지명은 한글 우선
+        if (ly.type === 'symbol' && gl.getLayoutProperty(ly.id, 'text-field'))
+          gl.setLayoutProperty(ly.id, 'text-field', ['coalesce', ['get', 'name:ko'], ['get', 'name'], ['get', 'name_int']]);
+      }
+    });
+    gl.on('error', e => { if (!done && /style|Failed to fetch|40\d|50\d/i.test(String(e?.error?.message || e?.error?.status || ''))) { clearTimeout(timer); map.removeLayer(layer); osm(); } });
+  } catch (e) { osm(); }
+}
+
 let current = [];
 const mapVisible = () => { const el = $('#map'); return el && el.offsetWidth > 0 && el.offsetHeight > 0; };
 function ensureMap() {
   if (map || !mapVisible()) return !!map;
   if (!window.L) { $('#map').innerHTML = '<div class="nomap"><b>지도를 불러오지 못했어요</b>새로고침하거나 잠시 후 다시 열어 주세요.</div>'; return false; }
-  map = L.map('map', { zoomControl: false, minZoom: 6, maxBounds: [[32, 123], [39.8, 133]] }).setView([36.2, 127.8], 7);
+  map = L.map('map', { zoomControl: false, minZoom: 6, maxZoom: 18, maxBounds: [[32, 123], [39.8, 133]] }).setView([37.52, 127.0], 10);   // 첫 화면: 수도권
   L.control.zoom({ position: 'bottomright' }).addTo(map);
-  // 배경 지도: OpenStreetMap(키 불필요, 한글 지명). 색은 CSS로 차분하게 조정
-  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19,
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>' }).addTo(map);
+  setBaseMap();
   cluster = L.markerClusterGroup ? L.markerClusterGroup({ showCoverageOnHover: false, maxClusterRadius: 50, spiderfyDistanceMultiplier: 1.6,
     iconCreateFunction: c => L.divIcon({ className: '', html: `<div class="cl">${c.getChildCount()}</div>`, iconSize: [46, 46] }) }) : L.layerGroup();
   map.addLayer(cluster);
@@ -143,6 +167,7 @@ function renderMap(items, fit = true) {
     m.bindPopup(`<div class="pop">${src ? `<div class="pimg" style="background-image:url('${esc(src)}')"></div>` : ''}<div class="pb"><b>${esc(f.title)}</b><span>${st.label} · ${span(f)} · ${esc(f._region)}</span><button data-id="${esc(f.id)}">자세히 보기</button></div></div>`);
     cluster.addLayer(m); markers.set(f.id, m); pts.push([f.lat, f.lng]);
   }
+  if (!renderMap.done) { renderMap.done = true; return; }   // 첫 화면은 수도권 그대로
   if (fit && pts.length) map.fitBounds(pts, { padding: [50, 50], maxZoom: 12 });
 }
 
@@ -199,5 +224,5 @@ fetch('data/festivals.json', { cache: 'no-cache' }).then(r => r.json()).then(dat
     state.theme = c.dataset.theme; update();
   });
   renderHero(); update();
-}).catch(() => { $('#list').innerHTML = '<li class="empty">축제 데이터를 불러오지 못했어요.</li>'; });
+}).catch(e => { console.error(e); $('#list').innerHTML = '<li class="empty">축제 데이터를 불러오지 못했어요.</li>'; });
 })();
