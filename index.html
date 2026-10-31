@@ -14,7 +14,7 @@
 <link rel="stylesheet" href="vendor/leaflet.css">
 <link rel="stylesheet" href="vendor/MarkerCluster.css">
 <link rel="stylesheet" href="vendor/maplibre-gl.css">
-<link rel="stylesheet" href="style.css?v=20261101b">
+<link rel="stylesheet" href="style.css?v=20261101c">
 </head>
 <body>
 <header class="top">
@@ -46,11 +46,13 @@
   <div class="filters">
     <select id="region" aria-label="지역"><option value="">전국</option></select>
     <select id="period" aria-label="기간">
-      <option value="all">전체 기간</option>
       <option value="now">지금 진행 중</option>
       <option value="week" selected>이번 주</option>
       <option value="weekend">이번 주말</option>
-      <option value="month">한 달 안</option>
+      <option value="nextweek">다음 주</option>
+      <option value="month">이번 달</option>
+      <option value="nextmonth">다음 달</option>
+      <option value="all">전체 기간</option>
     </select>
   </div>
   <div class="chips" id="themes"></div>
@@ -74,6 +76,6 @@
 <script src="vendor/leaflet.markercluster.js"></script>
 <script src="vendor/maplibre-gl.js"></script>
 <script src="vendor/leaflet-maplibre-gl.js"></script>
-<script src="app.js?v=20261101b"></script>
+<script src="app.js?v=20261101c"></script>
 </body>
 </html>

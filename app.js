@@ -10,7 +10,11 @@ const WEEK_END = ymd(kstDate(6));
 const dow = kstDate().getUTCDay();                       // 0=일 … 6=토
 const satOff = dow === 0 ? -1 : 6 - dow;
 const WKND = [ymd(kstDate(satOff)), ymd(kstDate(satOff + 1))];
-const MONTH_END = ymd(kstDate(30));
+const NEXT_WEEK = [ymd(kstDate(7)), ymd(kstDate(13))];
+const _t = kstDate(), _y = _t.getUTCFullYear(), _m = _t.getUTCMonth();
+const ymdUTC = (y, m, d) => ymd(new Date(Date.UTC(y, m, d)));
+const MONTH_END = ymdUTC(_y, _m + 1, 0);                         // 이번 달 말일
+const NEXT_MONTH = [ymdUTC(_y, _m + 1, 1), ymdUTC(_y, _m + 2, 0)];  // 다음 달 1일~말일
 const md = s => `${+s.slice(4, 6)}.${+s.slice(6, 8)}`;
 const span = f => f.start === f.end ? md(f.start) : `${md(f.start)} ~ ${md(f.end)}`;
 const diffDays = (a, b) => Math.round((Date.UTC(b.slice(0,4), b.slice(4,6)-1, b.slice(6)) - Date.UTC(a.slice(0,4), a.slice(4,6)-1, a.slice(6))) / 86400e3);
@@ -74,7 +78,9 @@ function filtered() {
     if (state.period === 'now' && !overlaps(f, TODAY, TODAY)) return false;
     if (state.period === 'week' && !overlaps(f, TODAY, WEEK_END)) return false;
     if (state.period === 'weekend' && !overlaps(f, WKND[0], WKND[1])) return false;
+    if (state.period === 'nextweek' && !overlaps(f, NEXT_WEEK[0], NEXT_WEEK[1])) return false;
     if (state.period === 'month' && !overlaps(f, TODAY, MONTH_END)) return false;
+    if (state.period === 'nextmonth' && !overlaps(f, NEXT_MONTH[0], NEXT_MONTH[1])) return false;
     if (q && !(f.title + ' ' + f.addr + ' ' + (f.overview || '')).toLowerCase().includes(q)) return false;
     return true;
   });
@@ -151,7 +157,7 @@ function ensureMap() {
   map.addLayer(cluster);
   return true;
 }
-function renderMap(items, fit = true) {
+function renderMap(items, fit = false) {
   current = items;
   const n = items.filter(f => f.lat && f.lng).length;
   $('#mapCount').textContent = `${n}곳 표시 중`;
@@ -167,7 +173,6 @@ function renderMap(items, fit = true) {
     m.bindPopup(`<div class="pop">${src ? `<div class="pimg" style="background-image:url('${esc(src)}')"></div>` : ''}<div class="pb"><b>${esc(f.title)}</b><span>${st.label} · ${span(f)} · ${esc(f._region)}</span><button data-id="${esc(f.id)}">자세히 보기</button></div></div>`);
     cluster.addLayer(m); markers.set(f.id, m); pts.push([f.lat, f.lng]);
   }
-  if (!renderMap.done) { renderMap.done = true; return; }   // 첫 화면은 수도권 그대로
   if (fit && pts.length) map.fitBounds(pts, { padding: [50, 50], maxZoom: 12 });
 }
 
@@ -203,9 +208,14 @@ function sorted(items) {
   const key = f => (isLong(f) ? '1' : '0') + (f.start < TODAY ? TODAY : f.start) + f.end;
   return items.sort((a, b) => key(a).localeCompare(key(b)));
 }
-function update() { const items = sorted(filtered()); renderList(items); renderMap(items); }
-let t; $('#q').addEventListener('input', e => { clearTimeout(t); t = setTimeout(() => { state.q = e.target.value; update(); }, 150); });
-$('#region').addEventListener('change', e => { state.region = e.target.value; update(); });
+// 지도 이동: 지역을 고르면 그 지역으로, 검색 결과가 적으면 결과로. 기간·테마만 바꿀 땐 보던 위치 유지
+function update(move = false) { const items = sorted(filtered()); renderList(items); renderMap(items, move); }
+let t; $('#q').addEventListener('input', e => { clearTimeout(t); t = setTimeout(() => { state.q = e.target.value; const n = filtered().length; update(!!state.q && n > 0 && n <= 40); }, 250); });
+$('#region').addEventListener('change', e => {
+  state.region = e.target.value;
+  if (state.region) update(true);
+  else { update(false); if (map) map.setView([37.52, 127.0], 10); }   // 전국으로 돌아오면 수도권 기본 화면
+});
 $('#period').addEventListener('change', e => { state.period = e.target.value; update(); });
 addEventListener('resize', () => { if (map) map.invalidateSize(); });
 
