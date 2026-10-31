@@ -19,8 +19,6 @@ jobs:
       - name: TourAPI에서 축제 받아오기
         env:
           TOURAPI_KEY: ${{ secrets.TOURAPI_KEY }}
-          NAVER_CLIENT_ID: ${{ secrets.NAVER_CLIENT_ID }}
-          NAVER_CLIENT_SECRET: ${{ secrets.NAVER_CLIENT_SECRET }}
         run: node scripts/fetch-festivals.mjs
       - name: 변경사항 저장
         run: |

@@ -143,7 +143,7 @@ function openDetail(id) {
   d.innerHTML = `<div class="${im.cls} d-img" style="${im.style}">${im.text}<span class="badge ${st.cls}">${st.label}</span><button class="d-close" aria-label="닫기">×</button></div>
     <div class="d-body"><h2>${esc(f.title)}</h2><div class="when">${span(f)} · ${esc(f._region)}</div>
       ${f.overview ? `<p class="ov">${esc(f.overview)}</p>` : ''}
-      ${f.imageSource && f.imageSource !== '한국관광공사' ? `<p class="credit">대표 이미지: ${f.imageLink ? `<a href="${esc(f.imageLink)}" target="_blank" rel="noopener">${esc(f.imageSource)}</a>` : esc(f.imageSource)} (축제와 다를 수 있음)</p>` : ''}
+      ${f.image && f.imageSource ? `<p class="credit">사진: ${f.imageLink ? `<a href="${esc(f.imageLink)}" target="_blank" rel="noopener">${esc(f.imageSource)}</a>` : esc(f.imageSource)}${f.imageLicense ? ` (${esc(f.imageLicense)})` : ''}${/장소/.test(f.imageSource) ? ' — 축제 현장 사진이 아닐 수 있어요' : ''}</p>` : ''}
       <dl class="d-info">${rows.map(([k, v]) => `<dt>${k}</dt><dd>${esc(v)}</dd>`).join('')}</dl>
       <div class="d-btns">
         ${f.homepage ? `<a class="primary" href="${esc(f.homepage)}" target="_blank" rel="noopener">공식 홈페이지</a>` : ''}
