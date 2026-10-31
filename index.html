@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>이번주 축제 — 전국 지역 축제 지도</title>
+<meta name="description" content="이번 주 열리는 전국 지역 축제를 한눈에. 지역·기간·테마로 검색하고 지도에서 가까운 축제를 찾아보세요.">
+<meta property="og:title" content="이번주 축제 — 전국 지역 축제 지도">
+<meta property="og:description" content="이번 주 열리는 전국 지역 축제를 지도와 검색으로 찾아보세요.">
+<meta name="theme-color" content="#ffffff">
+<link rel="preconnect" href="https://cdn.jsdelivr.net">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top">
+  <a class="logo" href="./"><span class="dot"></span>이번주 축제</a>
+  <span class="updated" id="updated"></span>
+</header>
+
+<section class="hero" aria-labelledby="hero-title">
+  <div class="hero-head">
+    <h1 id="hero-title">이번 주 주요 축제</h1>
+    <span class="range" id="weekRange"></span>
+  </div>
+  <div class="hero-track" id="heroTrack"></div>
+</section>
+
+<section class="controls" id="controls">
+  <div class="search">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <input id="q" type="search" placeholder="축제명, 지역, 키워드 검색" autocomplete="off">
+  </div>
+  <div class="filters">
+    <select id="region" aria-label="지역"><option value="">전국</option></select>
+    <select id="period" aria-label="기간">
+      <option value="all">전체 기간</option>
+      <option value="now">지금 진행 중</option>
+      <option value="week" selected>이번 주</option>
+      <option value="weekend">이번 주말</option>
+      <option value="month">한 달 안</option>
+    </select>
+  </div>
+  <div class="chips" id="themes"></div>
+</section>
+
+<div class="viewbar">
+  <span id="count"></span>
+  <div class="toggle" role="tablist">
+    <button data-view="list" class="on" role="tab">목록</button>
+    <button data-view="map" role="tab">지도</button>
+  </div>
+</div>
+
+<main class="body" data-view="list">
+  <ul class="list" id="list"></ul>
+  <div class="mapwrap"><div id="map"></div></div>
+</main>
+
+<dialog id="detail"></dialog>
+
+<footer class="foot">
+  <p>축제 정보 출처: <span id="source">한국관광공사 TourAPI</span>. 일정은 주최 측 사정으로 바뀔 수 있으니 방문 전 공식 안내를 확인하세요.</p>
+</footer>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
