@@ -111,7 +111,7 @@ function renderList(items) {
   }).join('') : '<li class="empty">조건에 맞는 축제가 없어요.<br>기간이나 지역을 넓혀 보세요.</li>';
 }
 
-// ── 지도 (CARTO Positron: 군더더기 없는 밝은 지도) ──
+// ── 지도 (OpenStreetMap) ──
 let current = [];
 const mapVisible = () => { const el = $('#map'); return el && el.offsetWidth > 0 && el.offsetHeight > 0; };
 function ensureMap() {
@@ -119,17 +119,9 @@ function ensureMap() {
   if (!window.L) { $('#map').innerHTML = '<div class="nomap"><b>지도를 불러오지 못했어요</b>새로고침하거나 잠시 후 다시 열어 주세요.</div>'; return false; }
   map = L.map('map', { zoomControl: false, minZoom: 6, maxBounds: [[32, 123], [39.8, 133]] }).setView([36.2, 127.8], 7);
   L.control.zoom({ position: 'bottomright' }).addTo(map);
-  const carto = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { subdomains: 'abcd', maxZoom: 19,
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>' }).addTo(map);
-  let fails = 0, loaded = 0;
-  carto.on('tileload', () => loaded++);
-  carto.on('tileerror', () => {                    // 지도 배경이 안 오면 OpenStreetMap으로 교체
-    if (++fails === 4 && loaded === 0) {
-      map.removeLayer(carto);
-      L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19,
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>' }).addTo(map);
-    }
-  });
+  // 배경 지도: OpenStreetMap(키 불필요, 한글 지명). 색은 CSS로 차분하게 조정
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19,
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>' }).addTo(map);
   cluster = L.markerClusterGroup ? L.markerClusterGroup({ showCoverageOnHover: false, maxClusterRadius: 50, spiderfyDistanceMultiplier: 1.6,
     iconCreateFunction: c => L.divIcon({ className: '', html: `<div class="cl">${c.getChildCount()}</div>`, iconSize: [46, 46] }) }) : L.layerGroup();
   map.addLayer(cluster);
