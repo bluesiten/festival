@@ -16,6 +16,15 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+      - name: 지도 라이브러리 내려받기(없을 때만)
+        run: |
+          mkdir -p vendor
+          [ -f vendor/leaflet.js ] || {
+            curl -sfL -o vendor/leaflet.js https://unpkg.com/leaflet@1.9.4/dist/leaflet.js
+            curl -sfL -o vendor/leaflet.css https://unpkg.com/leaflet@1.9.4/dist/leaflet.css
+            curl -sfL -o vendor/leaflet.markercluster.js https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js
+            curl -sfL -o vendor/MarkerCluster.css https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css
+          }
       - name: TourAPI에서 축제 받아오기
         env:
           TOURAPI_KEY: ${{ secrets.TOURAPI_KEY }}
@@ -24,6 +33,6 @@ jobs:
         run: |
           git config user.name "festival-bot"
           git config user.email "actions@users.noreply.github.com"
-          git add data images 2>/dev/null || git add data
+          git add data vendor; git add images 2>/dev/null || true
           git diff --staged --quiet || git commit -m "축제 데이터 갱신 $(date +%F)"
           git push
