@@ -194,7 +194,8 @@ async function galleryImage(keyword, label) {
   const text = await (await fetch('https://apis.data.go.kr/B551011/PhotoGalleryService1/gallerySearchList1?' + qs)).text();
   let json; try { json = JSON.parse(text); } catch { json = null; }
   const code = json?.response?.header?.resultCode;
-  if (!json || (code && code !== '0000')) {
+  if (!json?.response?.body || (code && code !== '0000')) {
+    errs.gallery = text.replace(KEY, '***').slice(0, 200);
     galleryOn = false;
     console.warn('관광사진갤러리 사용 불가(활용신청 필요할 수 있음):', (code || '') + ' ' + text.slice(0, 120));
     return null;
