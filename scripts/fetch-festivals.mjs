@@ -226,6 +226,8 @@ async function commonsImage(keyword, label) {
   return null;
 }
 
+const errs = {};
+const safe = async (fn, ...a) => { try { return await fn(...a); } catch (e) { errs[fn.name] = e.message; return null; } };
 for (const f of out) {
   if (f.image) {                                  // TourAPI 축제 사진
     if (!f.imageSource) Object.assign(f, { imageSource: '한국관광공사',
@@ -237,24 +239,27 @@ for (const f of out) {
   searched++;
   const name = shortName(f.title), place = f.place ? shortName(f.place.split(/[,·/]/)[0]) : '';
   try {
-    let hit = await tourImage(name, '한국관광공사');
+    let hit = await safe(tourImage, name, '한국관광공사');
     if (hit) hits.tour++;
-    if (!hit) { hit = await galleryImage(name, '한국관광공사 관광사진갤러리'); if (hit) hits.gallery++; }
-    if (!hit) { hit = await commonsImage(name, 'Wikimedia Commons'); if (hit) hits.commons++; }
+    if (!hit) { hit = await safe(galleryImage, name, '한국관광공사 관광사진갤러리'); if (hit) hits.gallery++; }
+    if (!hit) { hit = await safe(commonsImage, name, 'Wikimedia Commons'); if (hit) hits.commons++; }
     if (!hit && place) {                          // 축제 사진이 없으면 개최 장소 사진
-      hit = await tourImage(place, '개최 장소 사진 · 한국관광공사')
-        || await galleryImage(place, '개최 장소 사진 · 한국관광공사 관광사진갤러리')
-        || await commonsImage(place, '개최 장소 사진 · Wikimedia Commons');
+      hit = await safe(tourImage, place, '개최 장소 사진 · 한국관광공사')
+        || await safe(galleryImage, place, '개최 장소 사진 · 한국관광공사 관광사진갤러리')
+        || await safe(commonsImage, place, '개최 장소 사진 · Wikimedia Commons');
       if (hit) hits[/Commons/.test(hit.imageSource) ? 'commons' : /갤러리/.test(hit.imageSource) ? 'gallery' : 'tour']++;
     }
     if (hit) Object.assign(f, hit);
     f.imageChecked = IMG_VER + (galleryOn ? 'g' : '');
   } catch (e) { console.warn('이미지 검색 실패', f.title, e.message); }
 }
+if (Object.keys(errs).length) console.warn('이미지 검색 오류:', JSON.stringify(errs));
 console.log(`이미지 검색 ${searched}건 → 관광공사 ${hits.tour}, 관광사진갤러리 ${hits.gallery}, 위키미디어 ${hits.commons}`);
 
 out.sort((a, b) => a.start.localeCompare(b.start));
 await fs.writeFile(OUT, JSON.stringify({
-  updated: new Date().toISOString(), source: '한국관광공사 TourAPI · 전국문화축제표준데이터', festivals: out,
+  updated: new Date().toISOString(), source: '한국관광공사 TourAPI · 전국문화축제표준데이터',
+  report: { stdAdded, stdMerged, imageSearched: searched, imageHits: hits, galleryOn, errors: errs },
+  festivals: out,
 }, null, 0));
 console.log(`저장 완료: ${out.length}개, 상세 호출 ${detailCalls}건`);
