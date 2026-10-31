@@ -176,7 +176,7 @@ try {
 //    ③ Wikimedia Commons (CC0·퍼블릭도메인·CC BY/BY-SA, 저작자 표기)
 //    → 못 찾으면 색 블록. 네이버 등 일반 검색 이미지는 쓰지 않음
 // ─────────────────────────────────────────────
-const IMG_VER = 'v4';
+const IMG_VER = 'v5';
 let aiCount = 0, galleryOn = true, hits = { tour: 0, gallery: 0, commons: 0 }, searched = 0;
 const shortName = t => t.replace(/\(.*?\)|\[.*?\]|「.*?」|〈.*?〉/g, '').replace(/제?\s*\d+\s*회|\d{4}년?/g, '').replace(/\s+/g, ' ').trim();
 const related = (cand, k) => { const c = norm(cand); return k.length >= 3 && c.length >= 2 && (c.includes(k) || (c.length >= 3 && k.includes(c))); };
@@ -219,7 +219,8 @@ const titleTokens = t => [...new Set(shortName(t).replace(/[^가-힣a-zA-Z0-9 ]/
 const cityOf = f => {
   const parts = (f.addr || '').split(/\s+/);
   const c = parts.find((w, i) => i > 0 && /[시군구]$/.test(w) && w.length >= 2) || parts[0] || '';
-  return c.replace(/(특별자치시|특별자치도|특별시|광역시|자치시|시|군|구)$/, '');
+  const name = c.replace(/(특별자치시|특별자치도|특별시|광역시|자치시|시|군|구)$/, '');
+  return name.length >= 2 ? name : (parts[0] || '').replace(/(특별자치시|특별자치도|특별시|광역시|자치시|도)$/, '');   // 중구·동구 → 부산
 };
 async function relatedPhoto(f) {                  // 제목 단어로 찾은 사진(같은 지역 우선)
   const city = cityOf(f);
