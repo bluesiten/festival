@@ -25,6 +25,12 @@ jobs:
             curl -sfL -o vendor/leaflet.markercluster.js https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js
             curl -sfL -o vendor/MarkerCluster.css https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css
           }
+      - name: 벡터 지도 라이브러리 내려받기(없을 때만)
+        run: |
+          [ -f vendor/maplibre-gl.js ] || curl -sfL -o vendor/maplibre-gl.js https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js
+          [ -f vendor/maplibre-gl.css ] || curl -sfL -o vendor/maplibre-gl.css https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css
+          [ -f vendor/leaflet-maplibre-gl.js ] || curl -sfL -o vendor/leaflet-maplibre-gl.js https://unpkg.com/@maplibre/maplibre-gl-leaflet@0.0.22/leaflet-maplibre-gl.js
+          ls -la vendor
       - name: TourAPI에서 축제 받아오기
         env:
           TOURAPI_KEY: ${{ secrets.TOURAPI_KEY }}
