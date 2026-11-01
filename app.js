@@ -57,29 +57,32 @@ const cityName = f => { const w = (f.addr || '').split(/\s+/)[1] || ''; return /
 const themesOf = f => THEMES.filter(([, re]) => re.test(f.title + ' ' + (f.overview || ''))).map(([n]) => n);
 
 // 이미지가 없을 때 쓰는 색 블록
-const PAL = [['#ff7a59','#ffb36b'],['#5b8def','#8fb8ff'],['#20b486','#7fd8a8'],['#a66cff','#d2a8ff'],['#f25f8a','#ffa3bf'],['#f0a400','#ffd36b']];
+const PAL = ['#5f6f5e', '#6b6458', '#4f5b66', '#7a6a5a', '#5a6b6b', '#6e5f66'];
 const hash = s => [...s].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7);
 function imgStyle(f, big) {
   const src = big ? f.image || f.thumb : f.thumb || f.image;
   if (src) return { cls: 'img', style: `background-image:url('${esc(src.replace(/^http:/, 'https:'))}')`, text: '' };
-  const [a, b] = PAL[hash(f.title) % PAL.length];
-  return { cls: 'img ph', style: `background-image:linear-gradient(135deg,${a},${b})`, text: esc(f.title.replace(/^샘플\s*/, '').slice(0, 10)) };
+  return { cls: 'img ph', style: `background-color:${PAL[hash(f.title) % PAL.length]}`, text: esc(f.title.replace(/^샘플\s*/, '').slice(0, 10)) };
 }
 
 // ── 상태 ──
 let ALL = [], map, cluster, markers = new Map();
-const state = { q: '', region: '', period: 'week', theme: '' };
+const state = { q: '', region: '', period: 'week', theme: '', day: '' };
 
+function periodOK(f, p) {
+  if (p === 'now') return overlaps(f, TODAY, TODAY);
+  if (p === 'week') return overlaps(f, TODAY, WEEK_END);
+  if (p === 'nextweek') return overlaps(f, NEXT_WEEK[0], NEXT_WEEK[1]);
+  if (p === 'month') return overlaps(f, TODAY, MONTH_END);
+  if (p === 'nextmonth') return overlaps(f, NEXT_MONTH[0], NEXT_MONTH[1]);
+  return true;
+}
 function filtered() {
   const q = state.q.trim().toLowerCase();
   return ALL.filter(f => {
     if (state.region && f._region !== state.region) return false;
     if (state.theme && !f._themes.includes(state.theme)) return false;
-    if (state.period === 'now' && !overlaps(f, TODAY, TODAY)) return false;
-    if (state.period === 'week' && !overlaps(f, TODAY, WEEK_END)) return false;
-    if (state.period === 'nextweek' && !overlaps(f, NEXT_WEEK[0], NEXT_WEEK[1])) return false;
-    if (state.period === 'month' && !overlaps(f, TODAY, MONTH_END)) return false;
-    if (state.period === 'nextmonth' && !overlaps(f, NEXT_MONTH[0], NEXT_MONTH[1])) return false;
+    if (state.day ? !overlaps(f, state.day, state.day) : !periodOK(f, state.period)) return false;
     if (q && !(f.title + ' ' + f.addr + ' ' + (f.overview || '')).toLowerCase().includes(q)) return false;
     return true;
   });
@@ -95,7 +98,6 @@ function renderHero() {
   const live = pool.filter(f => f.start <= TODAY).slice(0, 5);
   const next = pool.filter(f => f.start > TODAY).slice(0, 10 - live.length);
   const picks = [...live.sort((a, b) => a.end.localeCompare(b.end)), ...next.sort((a, b) => a.start.localeCompare(b.start))];
-  $('#weekRange').textContent = `THIS WEEK · ${md(TODAY)} – ${md(WEEK_END)}`;
   $('#heroTrack').innerHTML = picks.map(f => {
     const st = status(f), im = imgStyle(f, true);
     return `<button class="hcard" data-id="${esc(f.id)}">
@@ -106,23 +108,48 @@ function renderHero() {
       ${f.overview ? `<p>${esc(f.overview)}</p>` : ''}</button>`;
   }).join('') || '<p class="empty">이번 주 등록된 축제가 없어요.</p>';
 
-  // 표지: 대표 축제 사진(축제 공식 사진 우선) 5장을 천천히 넘김
+  // 상단 한 줄: 이번 주 날짜와 축제 수
   const wk = ALL.filter(f => overlaps(f, TODAY, WEEK_END));
-  $('#heroSub').textContent = `이번 주, 전국 ${wk.length}개의 축제가 열립니다.`;
-  const covers = picks.filter(f => f.image && !/장소|지역|관련|AI/.test(f.imageSource || '')).slice(0, 5);
-  const list = covers.length ? covers : picks.filter(f => f.image).slice(0, 5);
-  // 표지: 이번 주 대표 축제 사진 한 장(넘기지 않음)
-  const f0 = list[0];
-  $('#slides').innerHTML = f0 ? `<div class="slide on" style="background-image:url('${esc((f0.image || '').replace(/^http:/, 'https:'))}')"></div>` : '';
-  if (f0) {
-    $('#coverStory').dataset.id = f0.id;
-    $('#coverStory').innerHTML = `<span class="lab">COVER</span><span class="tt">${esc(f0.title)} · ${esc(f0._region)}</span>`;
-  }
+  const mk = s => `${+s.slice(4, 6)}월 ${+s.slice(6, 8)}일`;
+  const endTxt = WEEK_END.slice(4, 6) === TODAY.slice(4, 6) ? `${+WEEK_END.slice(6, 8)}일` : mk(WEEK_END);
+  $('#weekRange').textContent = `${mk(TODAY)} – ${endTxt} · 이번 주 축제 ${wk.length}개`;
+  $('#heroSub').textContent = `이번 주 전국에서 열리는 ${wk.length}개의 지역 축제를 날짜, 지역, 지도로 찾아보세요.`;
+  reveal('#heroTrack .hcard', 70);
 }
+
+// 등장 효과(스크롤로 보일 때 한 번)
+const io = 'IntersectionObserver' in window ? new IntersectionObserver(es => es.forEach(e => {
+  if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }), { rootMargin: '0px 0px -8% 0px' }) : null;
+function reveal(sel, step = 0) {
+  if (!io || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  document.querySelectorAll(sel).forEach((el, i) => {
+    if (el.classList.contains('in')) return;
+    el.classList.add('reveal'); el.style.transitionDelay = `${Math.min(i, 6) * step}ms`; io.observe(el);
+  });
+}
+
+// 날짜 칸: 오늘부터 7일, 날마다 열리는 축제 수(지역·테마·검색 반영)
+const WD = ['일', '월', '화', '수', '목', '금', '토'];
+function renderDays() {
+  const q = state.q.trim().toLowerCase();
+  const base = ALL.filter(f => (!state.region || f._region === state.region) && (!state.theme || f._themes.includes(state.theme))
+    && (!q || (f.title + ' ' + f.addr + ' ' + (f.overview || '')).toLowerCase().includes(q)));
+  $('#days').innerHTML = Array.from({ length: 7 }, (_, i) => {
+    const d = kstDate(i), key = ymd(d), w = d.getUTCDay();
+    const n = base.filter(f => overlaps(f, key, key)).length;
+    return `<button type="button" class="day ${state.day === key ? 'on' : ''} ${w === 0 || w === 6 ? 'we' : ''}" data-day="${key}" aria-pressed="${state.day === key}" aria-label="${+key.slice(4, 6)}월 ${+key.slice(6, 8)}일 ${WD[w]}요일, 축제 ${n}개">
+      <span class="dw">${i === 0 ? '오늘' : WD[w]}</span><span class="dd">${+key.slice(6, 8)}</span><span class="dc">${n}개</span></button>`;
+  }).join('');
+}
+$('#days').addEventListener('click', e => {
+  const b = e.target.closest('.day'); if (!b) return;
+  state.day = state.day === b.dataset.day ? '' : b.dataset.day;     // 다시 누르면 해제
+  update();
+});
 
 // ── 목록 ──
 function renderList(items) {
-  $('#count').innerHTML = `<b>${items.length}</b>개의 축제`;
+  $('#count').innerHTML = state.day ? `${+state.day.slice(4, 6)}월 ${+state.day.slice(6, 8)}일 · <b>${items.length}</b>개` : `<b>${items.length}</b>개`;
   $('#list').innerHTML = items.length ? items.map(f => {
     const st = status(f), im = imgStyle(f);
     return `<li class="item" data-id="${esc(f.id)}">
@@ -204,7 +231,7 @@ function openDetail(id) {
   const rows = [['기간', `${span(f)} (${f.start.slice(0, 4)})`], ['장소', f.place || f.addr], ['주소', f.place ? f.addr : ''],
     ['시간', f.playtime], ['요금', f.fee], ['주최', f.host], ['문의', f.tel]].filter(r => r[1]);
   const d = $('#detail');
-  d.innerHTML = `<div class="${im.cls} d-img" style="${im.style}">${im.text}<span class="badge ${st.cls}">${st.label}</span><button class="d-close" aria-label="닫기">✕</button></div>
+  d.innerHTML = `<div class="${im.cls} d-img" style="${im.style}">${im.text}<span class="badge ${st.cls}">${st.label}</span><button class="d-close" aria-label="닫기"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
     <div class="d-body"><div class="when">${esc(f._region)} ${esc(cityName(f))} · ${span(f)}</div><h2>${esc(f.title)}</h2>
       ${f.overview ? `<p class="ov">${esc(f.overview)}</p>` : ''}
       ${f.image && f.imageSource ? `<p class="credit">사진: ${f.imageLink ? `<a href="${esc(f.imageLink)}" target="_blank" rel="noopener">${esc(f.imageSource)}</a>` : esc(f.imageSource)}${f.imageLicense ? ` (${esc(f.imageLicense)})` : ''}${/^AI/.test(f.imageSource) ? ' — 실제 축제 사진이 아니에요' : /장소|지역|관련/.test(f.imageSource) ? ' — 축제 현장 사진이 아닐 수 있어요' : ''}</p>` : ''}
@@ -229,14 +256,14 @@ function sorted(items) {
   return items.sort((a, b) => key(a).localeCompare(key(b)));
 }
 // 지도 이동: 지역을 고르면 그 지역으로, 검색 결과가 적으면 결과로. 기간·테마만 바꿀 땐 보던 위치 유지
-function update(move = false) { const items = sorted(filtered()); renderList(items); renderMap(items, move); }
+function update(move = false) { const items = sorted(filtered()); renderList(items); renderMap(items, move); renderDays(); }
 let t; $('#q').addEventListener('input', e => { clearTimeout(t); t = setTimeout(() => { state.q = e.target.value; const n = filtered().length; update(!!state.q && n > 0 && n <= 40); }, 250); });
 $('#region').addEventListener('change', e => {
   state.region = e.target.value;
   if (state.region) update(true);
   else { update(false); if (map) map.setView([37.52, 127.0], 10); }   // 전국으로 돌아오면 수도권 기본 화면
 });
-$('#period').addEventListener('change', e => { state.period = e.target.value; update(); });
+$('#period').addEventListener('change', e => { state.period = e.target.value; state.day = ''; update(); });
 addEventListener('resize', () => { if (map) map.invalidateSize(); });
 
 // ── 시작 ──

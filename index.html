@@ -4,84 +4,81 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>대한민국 축제의 모든 것 — 이번 주 전국 지역 축제</title>
-<meta name="description" content="이번 주 열리는 전국 지역 축제를 한눈에. 지역·기간·테마로 찾고, 지도에서 가까운 축제를 골라보세요.">
+<meta name="description" content="이번 주 열리는 전국 지역 축제를 한눈에. 날짜·지역·테마로 찾고, 지도에서 가까운 축제를 골라보세요.">
 <meta property="og:title" content="대한민국 축제의 모든 것">
-<meta property="og:description" content="이번 주 전국 지역 축제를 사진과 지도로 둘러보세요.">
+<meta property="og:description" content="이번 주 전국 지역 축제를 날짜와 지도로 찾아보세요.">
 <meta http-equiv="Cache-Control" content="no-cache">
-<meta name="theme-color" content="#111111">
+<meta name="theme-color" content="#1c1c1c">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@600;700&display=swap">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <link rel="stylesheet" href="vendor/leaflet.css">
 <link rel="stylesheet" href="vendor/MarkerCluster.css">
 <link rel="stylesheet" href="vendor/maplibre-gl.css">
-<link rel="stylesheet" href="style.css?v=20261101m">
+<link rel="stylesheet" href="style.css?v=20261101o">
 </head>
 <body>
 
-<!-- 표지 -->
-<header class="cover" id="cover">
-  <div class="slides" id="slides" aria-hidden="true"></div>
-  <div class="shade" aria-hidden="true"></div>
-  <div class="cover-text">
-    <div class="kicker-row"><p class="kicker" id="weekRange">THIS WEEK</p><span class="updated" id="updated"></span></div>
-    <h1>대한민국<br> 축제의 모든 것</h1>
-    <p class="dek" id="heroSub">이번 주, 전국에서 열리는 축제를 모았습니다.</p>
-    <button class="cover-story" id="coverStory" type="button"></button>
+<!-- 상단: 사진 없이 글자와 색만 -->
+<header class="top">
+  <div class="top-in">
+    <p class="top-meta"><span id="weekRange"></span><span id="updated"></span></p>
+    <h1 class="title"><span class="ln"><span>대한민국</span></span> <span class="ln"><span class="ink2">축제의 모든 것</span></span></h1>
+    <div class="top-foot">
+      <p class="dek" id="heroSub">이번 주 전국에서 열리는 지역 축제를 날짜, 지역, 지도로 찾아보세요.</p>
+      <a class="btn" href="#controls">날짜로 찾기</a>
+    </div>
   </div>
 </header>
 
 <section class="hl" aria-labelledby="hl-title">
-  <div class="sec-head">
-    <p class="eyebrow">Highlights</p>
-    <h2 id="hl-title">이번 주 하이라이트</h2>
-  </div>
+  <h2 class="sec-title" id="hl-title">이번 주 하이라이트</h2>
   <div class="hero-track" id="heroTrack"></div>
 </section>
 
-
-
-<section class="controls" id="controls">
-  <div class="search">
-    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-    <input id="q" type="search" placeholder="축제, 지역, 키워드 검색" autocomplete="off">
+<!-- 검색 띠 -->
+<section class="finder" id="controls" aria-labelledby="find-title">
+  <div class="finder-in">
+    <h2 class="sec-title" id="find-title">축제 찾기</h2>
+    <div class="search">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input id="q" type="search" placeholder="축제 이름, 지역, 키워드" autocomplete="off" aria-label="축제 검색">
+    </div>
+    <div class="days" id="days" role="group" aria-label="날짜 고르기"></div>
+    <div class="filters">
+      <select id="region" aria-label="지역"><option value="">전국</option></select>
+      <select id="period" aria-label="기간">
+        <option value="now">지금 진행 중</option>
+        <option value="week" selected>이번 주</option>
+        <option value="nextweek">다음 주</option>
+        <option value="month">이번 달</option>
+        <option value="nextmonth">다음 달</option>
+        <option value="all">전체 기간</option>
+      </select>
+    </div>
+    <div class="chips" id="themes" role="group" aria-label="테마"></div>
   </div>
-  <div class="filters">
-    <select id="region" aria-label="지역"><option value="">전국</option></select>
-    <select id="period" aria-label="기간">
-      <option value="now">지금 진행 중</option>
-      <option value="week" selected>이번 주</option>
-      <option value="nextweek">다음 주</option>
-      <option value="month">이번 달</option>
-      <option value="nextmonth">다음 달</option>
-      <option value="all">전체 기간</option>
-    </select>
-  </div>
-  <div class="chips" id="themes"></div>
 </section>
 
 <section class="mapsec" aria-labelledby="map-title">
-  <div class="sec-head row">
-    <div><p class="eyebrow">Map</p><h2 id="map-title">지도에서 찾기</h2></div>
-    <span class="sec-sub" id="mapCount"></span>
-  </div>
+  <div class="sec-row"><h2 class="sec-title" id="map-title">지도에서 보기</h2><span class="sec-sub" id="mapCount"></span></div>
   <div id="map"></div>
 </section>
 
-<div class="viewbar"><p class="eyebrow">All Festivals</p><span id="count"></span></div>
-
-<main class="body">
+<section class="all" aria-labelledby="list-title">
+  <div class="sec-row"><h2 class="sec-title" id="list-title">전체 축제</h2><span class="sec-sub" id="count"></span></div>
   <ul class="list" id="list"></ul>
-</main>
+</section>
 
 <dialog id="detail"></dialog>
 
 <footer class="foot">
-  <p class="foot-mark">대한민국 축제의 모든 것</p>
-  <p>축제 정보: <span id="source">한국관광공사 TourAPI</span><br>
-  사진: 한국관광공사(공공누리), Wikimedia Commons(사진별 라이선스 표기)<br>
-  일정은 주최 측 사정으로 바뀔 수 있으니 방문 전 공식 안내를 확인하세요.</p>
+  <div class="foot-in">
+    <p class="foot-mark">대한민국 축제의 모든 것</p>
+    <p class="foot-note">축제 정보: <span id="source">한국관광공사 TourAPI</span>. 사진: 한국관광공사(공공누리), Wikimedia Commons(사진별 라이선스 표기).
+    일정은 주최 측 사정으로 바뀔 수 있으니 방문 전 공식 안내를 확인하세요.</p>
+  </div>
 </footer>
 
 <script src="vendor/leaflet.js"></script>
@@ -89,6 +86,6 @@
 <script src="vendor/leaflet.markercluster.js"></script>
 <script src="vendor/maplibre-gl.js"></script>
 <script src="vendor/leaflet-maplibre-gl.js"></script>
-<script src="app.js?v=20261101m"></script>
+<script src="app.js?v=20261101o"></script>
 </body>
 </html>
