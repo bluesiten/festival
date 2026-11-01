@@ -154,3 +154,6 @@ dialog[open]{animation:rise .3s cubic-bezier(.2,.8,.2,1)}
 
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 @media(min-width:900px){.cover h1 br{display:none}}
+.seo-links{margin-top:14px;font-size:13px;line-height:1.9}.seo-links p{margin:0}.seo-links b{color:var(--ink2);margin-right:6px}.seo-links a{color:var(--ink2);margin-right:8px;text-decoration:none}.seo-links a:hover{text-decoration:underline}
+.d-share{display:block;margin:10px 0 0;text-align:center;font-size:13.5px;color:var(--ink2)}
+#list>li.item>a{font-weight:600}

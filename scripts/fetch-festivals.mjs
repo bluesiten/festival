@@ -66,7 +66,7 @@ try { prevAll = JSON.parse(await fs.readFile(OUT, 'utf8')).festivals || []; } ca
 const prevById = Object.fromEntries(prevAll.map(f => [f.id, f]));
 
 // 3) 앞으로 14일 안에 열리는 축제는 소개글·프로그램 상세까지 받기
-const soon = ymd(addDays(today, 14));
+const soon = ymd(addDays(today, 120));   // 검색용 페이지를 위해 넉넉히(캐시로 호출 수 절약)
 let detailCalls = 0;
 const out = [];
 for (const f of active) {

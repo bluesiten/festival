@@ -35,10 +35,16 @@ jobs:
         env:
           TOURAPI_KEY: ${{ secrets.TOURAPI_KEY }}
         run: node scripts/fetch-festivals.mjs
+      - name: 검색용 페이지 만들기
+        env:
+          SITE_URL: ${{ vars.SITE_URL }}
+          NAVER_SITE_VERIFICATION: ${{ vars.NAVER_SITE_VERIFICATION }}
+          GOOGLE_SITE_VERIFICATION: ${{ vars.GOOGLE_SITE_VERIFICATION }}
+        run: node scripts/build-pages.mjs
       - name: 변경사항 저장
         run: |
           git config user.name "festival-bot"
           git config user.email "actions@users.noreply.github.com"
-          git add data vendor; git add images 2>/dev/null || true
+          git add data vendor f area month sitemap.xml robots.txt rss.xml index.html; git add images 2>/dev/null || true
           git diff --staged --quiet || git commit -m "축제 데이터 갱신 $(date +%F)"
           git push

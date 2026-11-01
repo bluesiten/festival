@@ -128,7 +128,7 @@ function renderList(items) {
     return `<li class="item" data-id="${esc(f.id)}">
       <div class="${im.cls}" style="${im.style}">${im.text}${/^AI/.test(f.imageSource || '') ? '<span class="ai">AI</span>' : ''}</div>
       <div class="txt"><div class="when"><span class="tag ${st.cls}">${st.label}</span><span>${span(f)}</span></div>
-        <h3>${esc(f.title)}</h3>
+        <h3><a href="f/${esc(f.id)}.html" style="color:inherit;text-decoration:none">${esc(f.title)}</a></h3>
         <div class="where">${esc(f._region)} ${esc(cityName(f))}${f.place ? ' · ' + esc(f.place) : ''}</div></div></li>`;
   }).join('') : '<li class="empty">조건에 맞는 축제가 없어요.<br>기간이나 지역을 넓혀 보세요.</li>';
 }
@@ -213,14 +213,14 @@ function openDetail(id) {
         ${f.homepage ? `<a class="primary" href="${esc(f.homepage)}" target="_blank" rel="noopener">공식 홈페이지 →</a>` : ''}
         <a href="https://map.kakao.com/link/${f.lat ? `to/${label},${f.lat},${f.lng}` : `search/${wq}`}" target="_blank" rel="noopener">카카오맵 길찾기</a>
         <a href="https://map.naver.com/p/search/${wq}" target="_blank" rel="noopener">네이버 지도</a>
-      </div></div>`;
+      </div><a class="d-share" href="f/${esc(f.id)}.html">이 축제 페이지 열기 · 링크 공유</a></div>`;
   d.showModal(); d.scrollTop = 0;
   d.querySelector('.d-close').onclick = () => d.close();
 }
 $('#detail').addEventListener('click', e => { if (e.target.id === 'detail') e.target.close(); });
 document.addEventListener('click', e => {
   const el = e.target.closest('[data-id]');
-  if (el && !el.closest('dialog')) openDetail(el.dataset.id);
+  if (el && !el.closest('dialog')) { e.preventDefault(); openDetail(el.dataset.id); }   // 링크는 검색엔진용, 사람은 팝업으로
 });
 
 // ── 이벤트 ──
