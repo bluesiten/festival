@@ -57,7 +57,7 @@ const byStart = (a, b) => (isLong(a) - isLong(b)) || (a.start < TODAY ? TODAY : 
 // ── 페이지 틀 ──
 function page({ url, title, desc, image, body, jsonld = [], depth = 1, type = 'website' }) {
   const up = '../'.repeat(depth);
-  const canon = `${SITE}/${url}`.replace(/\/index\.html$/, '/');
+  const canon = encodeURI(`${SITE}/${url}`.replace(/\/index\.html$/, '/'));
   return `<!doctype html>
 <html lang="ko">
 <head>
@@ -92,7 +92,7 @@ ${body}
 `;
 }
 const crumbs = (items) => ({ '@context': 'https://schema.org', '@type': 'BreadcrumbList',
-  itemListElement: items.map(([name, url], i) => ({ '@type': 'ListItem', position: i + 1, name, item: `${SITE}/${url}`.replace(/\/index\.html$/, '/') })) });
+  itemListElement: items.map(([name, url], i) => ({ '@type': 'ListItem', position: i + 1, name, item: encodeURI(`${SITE}/${url}`.replace(/\/index\.html$/, '/')) })) });
 const crumbHTML = (items, depth) => `<nav class="crumbs" aria-label="현재 위치">${items.map(([n, u], i) =>
   i === items.length - 1 ? `<span>${esc(n)}</span>` : `<a href="${'../'.repeat(depth)}${u === 'index.html' ? '' : u}">${esc(n)}</a>`).join(' › ')}</nav>`;
 
@@ -245,7 +245,7 @@ await fs.writeFile(path.join(ROOT, 'index.html'), index);
 
 // ── 5) sitemap · robots · rss ──
 const day = new Date().toISOString().slice(0, 10);
-const sm = [[ '', '1.0' ], ...urls].map(([u, p]) => `<url><loc>${esc(`${SITE}/${u}`)}</loc><lastmod>${day}</lastmod><priority>${p}</priority></url>`);
+const sm = [[ '', '1.0' ], ...urls].map(([u, p]) => `<url><loc>${esc(encodeURI(`${SITE}/${u}`))}</loc><lastmod>${day}</lastmod><priority>${p}</priority></url>`);
 await fs.writeFile(path.join(ROOT, 'sitemap.xml'), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${sm.join('\n')}\n</urlset>\n`);
 await fs.writeFile(path.join(ROOT, 'robots.txt'), `User-agent: *\nAllow: /\n\nSitemap: ${SITE}/sitemap.xml\n`);
 const rssItems = LIVE.filter(f => !isLong(f)).sort((a, b) => (b.modified || b.start).localeCompare(a.modified || a.start)).slice(0, 60);
