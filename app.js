@@ -111,30 +111,13 @@ function renderHero() {
   $('#heroSub').textContent = `이번 주, 전국 ${wk.length}개의 축제가 열립니다.`;
   const covers = picks.filter(f => f.image && !/장소|지역|관련|AI/.test(f.imageSource || '')).slice(0, 5);
   const list = covers.length ? covers : picks.filter(f => f.image).slice(0, 5);
-  $('#slides').innerHTML = list.map((f, i) => `<div class="slide ${i ? '' : 'on'}" style="background-image:url('${esc((f.image || '').replace(/^http:/, 'https:'))}')"></div>`).join('');
-  $('#dots').innerHTML = list.length > 1 ? list.map((_, i) => `<button type="button" class="${i ? '' : 'on'}" data-i="${i}" aria-label="${i + 1}번째 표지"><i></i></button>`).join('') : '';
-  let cur = 0;
-  const show = i => {
-    cur = i;
-    document.querySelectorAll('.slide').forEach((el, k) => el.classList.toggle('on', k === i));
-    document.querySelectorAll('#dots button').forEach((el, k) => el.classList.toggle('on', k === i));
-    const f = list[i]; if (!f) return;
-    $('#coverStory').dataset.id = f.id;
-    $('#coverStory').innerHTML = `<span class="lab">COVER</span><span class="tt">${esc(f.title)} · ${esc(f._region)}</span>`;
-  };
-  show(0);
-  // 자동 넘김 + 손가락으로 밀기 + 점 눌러 이동
-  const n = list.length;
-  const play = () => { clearInterval(renderHero.t); if (n > 1) renderHero.t = setInterval(() => show((cur + 1) % n), 5500); };
-  play();
-  $('#dots').onclick = e => { const b = e.target.closest('button'); if (b) { show(+b.dataset.i); play(); } };
-  const cov = $('#cover'); let x0 = null, y0 = 0;
-  cov.ontouchstart = e => { x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; };
-  cov.ontouchend = e => {
-    if (x0 === null || n < 2) return;
-    const dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0; x0 = null;
-    if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) { show((cur + (dx < 0 ? 1 : n - 1)) % n); play(); }
-  };
+  // 표지: 이번 주 대표 축제 사진 한 장(넘기지 않음)
+  const f0 = list[0];
+  $('#slides').innerHTML = f0 ? `<div class="slide on" style="background-image:url('${esc((f0.image || '').replace(/^http:/, 'https:'))}')"></div>` : '';
+  if (f0) {
+    $('#coverStory').dataset.id = f0.id;
+    $('#coverStory').innerHTML = `<span class="lab">COVER</span><span class="tt">${esc(f0.title)} · ${esc(f0._region)}</span>`;
+  }
 }
 
 // ── 목록 ──
