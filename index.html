@@ -3,64 +3,39 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>대한민국 모두의 축제 — 전국 지역 축제 지도</title>
-<meta name="description" content="이번 주 열리는 전국 지역 축제를 한눈에. 지역·기간·테마로 찾고, 지도에서 가까운 축제를 골라보세요.">
-<meta property="og:title" content="대한민국 모두의 축제">
-<meta property="og:description" content="이번 주 전국 지역 축제를 지도와 검색으로 찾아보세요. 주사위를 굴려 오늘 갈 축제를 골라도 좋아요.">
+<title>이번주 축제 — 전국 지역 축제 지도</title>
+<meta name="description" content="이번 주 열리는 전국 지역 축제를 한눈에. 지역·기간·테마로 검색하고 지도에서 가까운 축제를 찾아보세요.">
+<meta property="og:title" content="이번주 축제 — 전국 지역 축제 지도">
+<meta property="og:description" content="이번 주 열리는 전국 지역 축제를 지도와 검색으로 찾아보세요.">
 <meta http-equiv="Cache-Control" content="no-cache">
-<meta name="theme-color" content="#5cc8ff">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&display=swap">
+<meta name="theme-color" content="#fbf7f2">
+<link rel="preconnect" href="https://cdn.jsdelivr.net">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <link rel="stylesheet" href="vendor/leaflet.css">
 <link rel="stylesheet" href="vendor/MarkerCluster.css">
 <link rel="stylesheet" href="vendor/maplibre-gl.css">
-<link rel="stylesheet" href="style.css?v=20261101e">
+<link rel="stylesheet" href="style.css?v=20261101f">
 </head>
 <body>
-
-<!-- 상단: 게임 보드 -->
-<header class="board">
-  <div class="board-sky" aria-hidden="true"><i class="cloud c1"></i><i class="cloud c2"></i><i class="cloud c3"></i></div>
-  <div class="topbar">
-    <a class="logo" href="./" aria-label="모두의 축제 홈">
-      <span class="logo-die" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>
-      <span>모두의 축제</span>
-    </a>
-    <span class="updated" id="updated"></span>
-  </div>
-
-  <div class="headline">
-    <p class="kicker" id="weekRange">THIS WEEK</p>
-    <h1><span class="h1-sm">대한민국</span><span class="h1-lg">모두의 축제</span></h1>
-    <p class="sub" id="heroSub">이번 주 전국에서 열리는 축제를 한판에 모았어요</p>
-    <div class="stats" id="stats"></div>
-    <button class="btn-roll" id="roll" type="button">
-      <span class="die" id="die" aria-hidden="true"></span>
-      <span class="roll-txt"><b>주사위 굴리기</b><small>오늘 갈 축제를 뽑아드려요</small></span>
-    </button>
-    <div class="deco-dice" aria-hidden="true"><span class="ddie d1"></span><span class="ddie d2"></span></div>
-  </div>
-
-  <!-- 보드 칸: 지역 고르기 -->
-  <nav class="tiles" id="tiles" aria-label="지역 고르기"></nav>
+<header class="top">
+  <a class="logo" href="./" aria-label="이번주 축제 홈">
+    <span class="mark" aria-hidden="true"><i></i><i></i><i></i></span>
+    <span class="name">이번주 축제<small>전국 지역 축제 지도</small></span>
+  </a>
+  <span class="updated" id="updated"></span>
 </header>
 
-<section class="hl" aria-labelledby="hl-title">
-  <div class="sec-head">
-    <h2 id="hl-title"><span class="sec-ico">★</span>이번 주 하이라이트</h2>
-    <span class="sec-sub">진행 중 → 곧 시작</span>
+<section class="hero" aria-labelledby="hero-title">
+  <div class="hero-head">
+    <p class="kicker" id="weekRange"></p>
+    <h1 id="hero-title">이번 주, 어디로 떠나볼까요?</h1>
   </div>
   <div class="hero-track" id="heroTrack"></div>
 </section>
 
-<section class="mapsec" aria-labelledby="map-title">
-  <div class="sec-head">
-    <h2 id="map-title"><span class="sec-ico">◎</span>지도에서 찾기</h2>
-    <span class="sec-sub" id="mapCount"></span>
-  </div>
-  <div class="map-frame"><div id="map"></div></div>
+<section class="mapsec" aria-label="축제 지도">
+  <div class="sec-head"><h2>지도에서 찾기</h2><span id="mapCount"></span></div>
+  <div id="map"></div>
 </section>
 
 <section class="controls" id="controls">
@@ -88,14 +63,11 @@
   <ul class="list" id="list"></ul>
 </main>
 
-<div class="toast" id="toast" role="status" aria-live="polite"></div>
 <dialog id="detail"></dialog>
 
 <footer class="foot">
-  <div class="foot-logo"><span class="logo-die sm" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>모두의 축제</div>
   <p>축제 정보: <span id="source">한국관광공사 TourAPI</span><br>
-  사진: 한국관광공사(공공누리), Wikimedia Commons(사진별 라이선스 표기)<br>
-  일정은 주최 측 사정으로 바뀔 수 있으니 방문 전 공식 안내를 확인하세요.</p>
+  사진: 한국관광공사(공공누리), Wikimedia Commons(사진별 라이선스 표기). 일정은 주최 측 사정으로 바뀔 수 있으니 방문 전 공식 안내를 확인하세요.</p>
 </footer>
 
 <script src="vendor/leaflet.js"></script>
@@ -103,6 +75,6 @@
 <script src="vendor/leaflet.markercluster.js"></script>
 <script src="vendor/maplibre-gl.js"></script>
 <script src="vendor/leaflet-maplibre-gl.js"></script>
-<script src="app.js?v=20261101e"></script>
+<script src="app.js?v=20261101f"></script>
 </body>
 </html>
