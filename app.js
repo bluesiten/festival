@@ -99,23 +99,43 @@ function renderHero() {
   $('#heroTrack').innerHTML = picks.map(f => {
     const st = status(f), im = imgStyle(f, true);
     return `<button class="hcard" data-id="${esc(f.id)}">
-      <div class="${im.cls}" style="${im.style}"></div>
-      <span class="badge ${st.cls}">${st.label}</span>${f.sample ? '<span class="sample">샘플</span>' : /^AI/.test(f.imageSource || '') ? '<span class="sample">AI 이미지</span>' : ''}
-      <div class="over"><h3>${esc(f.title)}</h3>
-        <div class="meta"><span>${span(f)}</span><span>·</span><span>${esc(f._region)} ${esc(cityName(f))}</span></div>
-        ${f.overview ? `<p>${esc(f.overview)}</p>` : ''}</div></button>`;
-  }).join('') || '<p class="empty" style="padding:20px">이번 주 등록된 축제가 없어요.</p>';
+      <div class="ph-wrap"><div class="${im.cls}" style="${im.style}">${im.text}</div>
+        <span class="badge ${st.cls}">${st.label}</span>${f.sample ? '<span class="sample">샘플</span>' : /^AI/.test(f.imageSource || '') ? '<span class="sample">AI 이미지</span>' : ''}</div>
+      <div class="meta">${esc(f._region)} ${esc(cityName(f))} · ${span(f)}</div>
+      <h3>${esc(f.title)}</h3>
+      ${f.overview ? `<p>${esc(f.overview)}</p>` : ''}</button>`;
+  }).join('') || '<p class="empty">이번 주 등록된 축제가 없어요.</p>';
+
+  // 표지: 대표 축제 사진(축제 공식 사진 우선) 5장을 천천히 넘김
+  const wk = ALL.filter(f => overlaps(f, TODAY, WEEK_END));
+  $('#heroSub').textContent = `이번 주, 전국 ${wk.length}개의 축제가 열립니다.`;
+  const covers = picks.filter(f => f.image && !/장소|지역|관련|AI/.test(f.imageSource || '')).slice(0, 5);
+  const list = covers.length ? covers : picks.filter(f => f.image).slice(0, 5);
+  $('#slides').innerHTML = list.map((f, i) => `<div class="slide ${i ? '' : 'on'}" style="background-image:url('${esc((f.image || '').replace(/^http:/, 'https:'))}')"></div>`).join('');
+  $('#dots').innerHTML = list.length > 1 ? list.map((_, i) => `<i class="${i ? '' : 'on'}"></i>`).join('') : '';
+  let cur = 0;
+  const show = i => {
+    cur = i;
+    document.querySelectorAll('.slide').forEach((el, k) => el.classList.toggle('on', k === i));
+    document.querySelectorAll('#dots i').forEach((el, k) => el.classList.toggle('on', k === i));
+    const f = list[i]; if (!f) return;
+    $('#coverStory').dataset.id = f.id;
+    $('#coverStory').innerHTML = `<span class="lab">COVER</span><span class="tt">${esc(f.title)} · ${esc(f._region)}</span>`;
+  };
+  show(0);
+  clearInterval(renderHero.t);
+  if (list.length > 1) renderHero.t = setInterval(() => show((cur + 1) % list.length), 5500);
 }
 
 // ── 목록 ──
 function renderList(items) {
-  $('#count').innerHTML = `<b>${items.length}</b>개 축제`;
+  $('#count').innerHTML = `<b>${items.length}</b>개의 축제`;
   $('#list').innerHTML = items.length ? items.map(f => {
     const st = status(f), im = imgStyle(f);
     return `<li class="item" data-id="${esc(f.id)}">
       <div class="${im.cls}" style="${im.style}">${im.text}${/^AI/.test(f.imageSource || '') ? '<span class="ai">AI</span>' : ''}</div>
-      <div class="txt"><h3>${esc(f.title)}</h3>
-        <div class="when"><span class="tag ${st.cls}">${st.label}</span>${span(f)}</div>
+      <div class="txt"><div class="when"><span class="tag ${st.cls}">${st.label}</span><span>${span(f)}</span></div>
+        <h3>${esc(f.title)}</h3>
         <div class="where">${esc(f._region)} ${esc(cityName(f))}${f.place ? ' · ' + esc(f.place) : ''}</div></div></li>`;
   }).join('') : '<li class="empty">조건에 맞는 축제가 없어요.<br>기간이나 지역을 넓혀 보세요.</li>';
 }
@@ -156,7 +176,7 @@ function ensureMap() {
   L.control.zoom({ position: 'bottomright' }).addTo(map);
   setBaseMap();
   cluster = L.markerClusterGroup ? L.markerClusterGroup({ showCoverageOnHover: false, maxClusterRadius: 50, spiderfyDistanceMultiplier: 1.6,
-    iconCreateFunction: c => L.divIcon({ className: '', html: `<div class="cl">${c.getChildCount()}</div>`, iconSize: [46, 46] }) }) : L.layerGroup();
+    iconCreateFunction: c => L.divIcon({ className: '', html: `<div class="cl">${c.getChildCount()}</div>`, iconSize: [42, 42] }) }) : L.layerGroup();
   map.addLayer(cluster);
   return true;
 }
@@ -173,7 +193,7 @@ function renderMap(items, fit = false) {
     const m = L.marker([f.lat, f.lng], { icon: L.divIcon({ className: '',
       html: `<div class="ppin ${st.cls === 'live' ? 'live' : ''}"><i style="${src ? `background-image:url('${esc(src)}')` : ''}"></i></div>`,
       iconSize: [44, 44], iconAnchor: [22, 50], popupAnchor: [0, -48] }) });
-    m.bindPopup(`<div class="pop">${src ? `<div class="pimg" style="background-image:url('${esc(src)}')"></div>` : ''}<div class="pb"><b>${esc(f.title)}</b><span>${st.label} · ${span(f)} · ${esc(f._region)}</span><button data-id="${esc(f.id)}">자세히 보기</button></div></div>`);
+    m.bindPopup(`<div class="pop">${src ? `<div class="pimg" style="background-image:url('${esc(src)}')"></div>` : ''}<div class="pb"><b>${esc(f.title)}</b><span>${esc(f._region)} ${esc(cityName(f))} · ${span(f)}</span><button data-id="${esc(f.id)}">자세히 보기</button></div></div>`);
     cluster.addLayer(m); markers.set(f.id, m); pts.push([f.lat, f.lng]);
   }
   if (fit && pts.length) map.fitBounds(pts, { padding: [50, 50], maxZoom: 12 });
@@ -186,22 +206,22 @@ function openDetail(id) {
   // 지도 검색어: 축제명이 아니라 장소. 장소명이 깔끔하면 '시군 + 장소', 아니면 주소
   const placeClean = (f.place || '').split(/[,·/+()]|\s및\s|일원|일대/)[0].trim();
   const where = placeClean && placeClean.length <= 20 && !/미정|전역|온라인/.test(placeClean)
-    ? `${cityName(f) || f._region} ${placeClean}`.trim() : (f.addr || placeClean || f.title);
+    ? (placeClean.startsWith((cityName(f) || f._region).replace(/[시군구]$/, '')) ? placeClean : `${cityName(f) || f._region} ${placeClean}`.trim()) : (f.addr || placeClean || f.title);
   const wq = encodeURIComponent(where), label = encodeURIComponent(placeClean || f.title);
   const rows = [['기간', `${span(f)} (${f.start.slice(0, 4)})`], ['장소', f.place || f.addr], ['주소', f.place ? f.addr : ''],
     ['시간', f.playtime], ['요금', f.fee], ['주최', f.host], ['문의', f.tel]].filter(r => r[1]);
   const d = $('#detail');
-  d.innerHTML = `<div class="${im.cls} d-img" style="${im.style}">${im.text}<span class="badge ${st.cls}">${st.label}</span><button class="d-close" aria-label="닫기">×</button></div>
-    <div class="d-body"><h2>${esc(f.title)}</h2><div class="when">${span(f)} · ${esc(f._region)}</div>
+  d.innerHTML = `<div class="${im.cls} d-img" style="${im.style}">${im.text}<span class="badge ${st.cls}">${st.label}</span><button class="d-close" aria-label="닫기">✕</button></div>
+    <div class="d-body"><div class="when">${esc(f._region)} ${esc(cityName(f))} · ${span(f)}</div><h2>${esc(f.title)}</h2>
       ${f.overview ? `<p class="ov">${esc(f.overview)}</p>` : ''}
       ${f.image && f.imageSource ? `<p class="credit">사진: ${f.imageLink ? `<a href="${esc(f.imageLink)}" target="_blank" rel="noopener">${esc(f.imageSource)}</a>` : esc(f.imageSource)}${f.imageLicense ? ` (${esc(f.imageLicense)})` : ''}${/^AI/.test(f.imageSource) ? ' — 실제 축제 사진이 아니에요' : /장소|지역|관련/.test(f.imageSource) ? ' — 축제 현장 사진이 아닐 수 있어요' : ''}</p>` : ''}
       <dl class="d-info">${rows.map(([k, v]) => `<dt>${k}</dt><dd>${esc(v)}</dd>`).join('')}</dl>
       <div class="d-btns">
-        ${f.homepage ? `<a class="primary" href="${esc(f.homepage)}" target="_blank" rel="noopener">공식 홈페이지</a>` : ''}
+        ${f.homepage ? `<a class="primary" href="${esc(f.homepage)}" target="_blank" rel="noopener">공식 홈페이지 →</a>` : ''}
         <a href="https://map.kakao.com/link/${f.lat ? `to/${label},${f.lat},${f.lng}` : `search/${wq}`}" target="_blank" rel="noopener">카카오맵 길찾기</a>
         <a href="https://map.naver.com/p/search/${wq}" target="_blank" rel="noopener">네이버 지도</a>
       </div></div>`;
-  d.showModal();
+  d.showModal(); d.scrollTop = 0;
   d.querySelector('.d-close').onclick = () => d.close();
 }
 $('#detail').addEventListener('click', e => { if (e.target.id === 'detail') e.target.close(); });

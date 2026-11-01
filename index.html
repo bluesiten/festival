@@ -3,45 +3,60 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>이번주 축제 — 전국 지역 축제 지도</title>
-<meta name="description" content="이번 주 열리는 전국 지역 축제를 한눈에. 지역·기간·테마로 검색하고 지도에서 가까운 축제를 찾아보세요.">
-<meta property="og:title" content="이번주 축제 — 전국 지역 축제 지도">
-<meta property="og:description" content="이번 주 열리는 전국 지역 축제를 지도와 검색으로 찾아보세요.">
+<title>대한민국 모두의 축제 — 이번 주 전국 지역 축제</title>
+<meta name="description" content="이번 주 열리는 전국 지역 축제를 한눈에. 지역·기간·테마로 찾고, 지도에서 가까운 축제를 골라보세요.">
+<meta property="og:title" content="대한민국 모두의 축제">
+<meta property="og:description" content="이번 주 전국 지역 축제를 사진과 지도로 둘러보세요.">
 <meta http-equiv="Cache-Control" content="no-cache">
-<meta name="theme-color" content="#fbf7f2">
-<link rel="preconnect" href="https://cdn.jsdelivr.net">
+<meta name="theme-color" content="#111111">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600;700&display=swap">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <link rel="stylesheet" href="vendor/leaflet.css">
 <link rel="stylesheet" href="vendor/MarkerCluster.css">
 <link rel="stylesheet" href="vendor/maplibre-gl.css">
-<link rel="stylesheet" href="style.css?v=20261101f">
+<link rel="stylesheet" href="style.css?v=20261101g">
 </head>
 <body>
-<header class="top">
-  <a class="logo" href="./" aria-label="이번주 축제 홈">
-    <span class="mark" aria-hidden="true"><i></i><i></i><i></i></span>
-    <span class="name">이번주 축제<small>전국 지역 축제 지도</small></span>
-  </a>
-  <span class="updated" id="updated"></span>
+
+<!-- 표지 -->
+<header class="cover" id="cover">
+  <div class="slides" id="slides" aria-hidden="true"></div>
+  <div class="shade" aria-hidden="true"></div>
+  <nav class="topbar">
+    <a class="wordmark" href="./">모두의 축제</a>
+    <span class="updated" id="updated"></span>
+  </nav>
+  <div class="cover-text">
+    <p class="kicker" id="weekRange">THIS WEEK</p>
+    <h1>대한민국<br>모두의 축제</h1>
+    <p class="dek" id="heroSub">이번 주, 전국에서 열리는 축제를 모았습니다.</p>
+    <button class="cover-story" id="coverStory" type="button"></button>
+  </div>
+  <div class="dots" id="dots" aria-hidden="true"></div>
 </header>
 
-<section class="hero" aria-labelledby="hero-title">
-  <div class="hero-head">
-    <p class="kicker" id="weekRange"></p>
-    <h1 id="hero-title">이번 주, 어디로 떠나볼까요?</h1>
+<section class="hl" aria-labelledby="hl-title">
+  <div class="sec-head">
+    <p class="eyebrow">Highlights</p>
+    <h2 id="hl-title">이번 주 하이라이트</h2>
   </div>
   <div class="hero-track" id="heroTrack"></div>
 </section>
 
-<section class="mapsec" aria-label="축제 지도">
-  <div class="sec-head"><h2>지도에서 찾기</h2><span id="mapCount"></span></div>
+<section class="mapsec" aria-labelledby="map-title">
+  <div class="sec-head row">
+    <div><p class="eyebrow">Map</p><h2 id="map-title">지도에서 찾기</h2></div>
+    <span class="sec-sub" id="mapCount"></span>
+  </div>
   <div id="map"></div>
 </section>
 
 <section class="controls" id="controls">
   <div class="search">
     <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-    <input id="q" type="search" placeholder="축제명, 지역, 키워드로 찾기" autocomplete="off">
+    <input id="q" type="search" placeholder="축제, 지역, 키워드 검색" autocomplete="off">
   </div>
   <div class="filters">
     <select id="region" aria-label="지역"><option value="">전국</option></select>
@@ -57,7 +72,7 @@
   <div class="chips" id="themes"></div>
 </section>
 
-<div class="viewbar"><span id="count"></span></div>
+<div class="viewbar"><p class="eyebrow">All Festivals</p><span id="count"></span></div>
 
 <main class="body">
   <ul class="list" id="list"></ul>
@@ -66,8 +81,10 @@
 <dialog id="detail"></dialog>
 
 <footer class="foot">
+  <p class="foot-mark">모두의 축제</p>
   <p>축제 정보: <span id="source">한국관광공사 TourAPI</span><br>
-  사진: 한국관광공사(공공누리), Wikimedia Commons(사진별 라이선스 표기). 일정은 주최 측 사정으로 바뀔 수 있으니 방문 전 공식 안내를 확인하세요.</p>
+  사진: 한국관광공사(공공누리), Wikimedia Commons(사진별 라이선스 표기)<br>
+  일정은 주최 측 사정으로 바뀔 수 있으니 방문 전 공식 안내를 확인하세요.</p>
 </footer>
 
 <script src="vendor/leaflet.js"></script>
@@ -75,6 +92,6 @@
 <script src="vendor/leaflet.markercluster.js"></script>
 <script src="vendor/maplibre-gl.js"></script>
 <script src="vendor/leaflet-maplibre-gl.js"></script>
-<script src="app.js?v=20261101f"></script>
+<script src="app.js?v=20261101g"></script>
 </body>
 </html>
