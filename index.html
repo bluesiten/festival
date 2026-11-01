@@ -16,7 +16,7 @@
 <link rel="stylesheet" href="vendor/leaflet.css">
 <link rel="stylesheet" href="vendor/MarkerCluster.css">
 <link rel="stylesheet" href="vendor/maplibre-gl.css">
-<link rel="stylesheet" href="style.css?v=20261101i">
+<link rel="stylesheet" href="style.css?v=20261101k">
 </head>
 <body>
 
@@ -25,7 +25,7 @@
   <div class="slides" id="slides" aria-hidden="true"></div>
   <div class="shade" aria-hidden="true"></div>
   <nav class="topbar">
-    <a class="wordmark" href="./">모두의 축제</a>
+    <div class="dots" id="dots" role="tablist" aria-label="표지 넘기기"></div>
     <span class="updated" id="updated"></span>
   </nav>
   <div class="cover-text">
@@ -34,7 +34,6 @@
     <p class="dek" id="heroSub">이번 주, 전국에서 열리는 축제를 모았습니다.</p>
     <button class="cover-story" id="coverStory" type="button"></button>
   </div>
-  <div class="dots" id="dots" aria-hidden="true"></div>
 </header>
 
 <section class="hl" aria-labelledby="hl-title">
@@ -45,13 +44,7 @@
   <div class="hero-track" id="heroTrack"></div>
 </section>
 
-<section class="mapsec" aria-labelledby="map-title">
-  <div class="sec-head row">
-    <div><p class="eyebrow">Map</p><h2 id="map-title">지도에서 찾기</h2></div>
-    <span class="sec-sub" id="mapCount"></span>
-  </div>
-  <div id="map"></div>
-</section>
+
 
 <section class="controls" id="controls">
   <div class="search">
@@ -72,6 +65,14 @@
   <div class="chips" id="themes"></div>
 </section>
 
+<section class="mapsec" aria-labelledby="map-title">
+  <div class="sec-head row">
+    <div><p class="eyebrow">Map</p><h2 id="map-title">지도에서 찾기</h2></div>
+    <span class="sec-sub" id="mapCount"></span>
+  </div>
+  <div id="map"></div>
+</section>
+
 <div class="viewbar"><p class="eyebrow">All Festivals</p><span id="count"></span></div>
 
 <main class="body">
@@ -81,7 +82,7 @@
 <dialog id="detail"></dialog>
 
 <footer class="foot">
-  <p class="foot-mark">모두의 축제</p>
+  <p class="foot-mark">대한민국 축제의 모든 것</p>
   <p>축제 정보: <span id="source">한국관광공사 TourAPI</span><br>
   사진: 한국관광공사(공공누리), Wikimedia Commons(사진별 라이선스 표기)<br>
   일정은 주최 측 사정으로 바뀔 수 있으니 방문 전 공식 안내를 확인하세요.</p>
@@ -92,6 +93,6 @@
 <script src="vendor/leaflet.markercluster.js"></script>
 <script src="vendor/maplibre-gl.js"></script>
 <script src="vendor/leaflet-maplibre-gl.js"></script>
-<script src="app.js?v=20261101i"></script>
+<script src="app.js?v=20261101k"></script>
 </body>
 </html>
