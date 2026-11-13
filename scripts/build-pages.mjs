@@ -121,6 +121,7 @@ for (const f of ALL) {
   const img = https(f.image || f.thumb);
   const near = LIVE.filter(x => x.id !== f.id && x._r === f._r && !isLong(x)).sort((a, b) => (b._c === f._c) - (a._c === f._c) || byStart(a, b)).slice(0, 6);
   const q = encodeURIComponent(f.place ? `${cityShort(f._c) || f._r} ${String(f.place).split(/[,·/+()]/)[0].trim()}` : (f.addr || f.title));
+  const home = /^https?:\/\/[^\s"'<>()]+$/.test(f.homepage || '') ? f.homepage : '';
   const rows = [['기간', kspan(f)], ['장소', f.place], ['주소', f.addr], ['시간', f.playtime], ['요금', f.fee], ['주최', f.host], ['문의', f.tel]].filter(r => r[1]);
   const event = {
     '@context': 'https://schema.org', '@type': 'Event', name: f.title,
@@ -144,7 +145,8 @@ for (const f of ALL) {
   ${f.overview ? `<h2>${esc(f.title)}는 어떤 축제인가요</h2>${String(f.overview).split(/\n+/).filter(Boolean).map(p => `<p>${esc(p)}</p>`).join('')}` : ''}
   <h2>일정과 장소</h2>
   <dl class="info">${rows.map(([k, v]) => `<dt>${k}</dt><dd>${esc(v)}</dd>`).join('')}</dl>
-  <p class="btns">${f.homepage ? `<a class="primary" href="${esc(f.homepage)}" rel="noopener" target="_blank">공식 홈페이지</a>` : ''}
+  <p class="btns">${home ? `<a class="primary" href="${esc(home)}" rel="noopener" target="_blank">공식 홈페이지</a>` : ''}
+    <a${home ? '' : ' class="primary"'} href="https://search.naver.com/search.naver?query=${encodeURIComponent(f.title)}" rel="noopener" target="_blank">네이버에서 검색</a>
     <a href="https://map.naver.com/p/search/${q}" rel="noopener" target="_blank">네이버 지도</a>
     <a href="https://map.kakao.com/link/${f.lat ? `to/${encodeURIComponent(f.place || f.title)},${f.lat},${f.lng}` : `search/${q}`}" rel="noopener" target="_blank">카카오맵 길찾기</a></p>
 </article>

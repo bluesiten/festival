@@ -203,6 +203,9 @@ function openDetail(id) {
   const wq = encodeURIComponent(where), label = encodeURIComponent(placeClean || f.title);
   const rows = [['기간', `${span(f)} (${f.start.slice(0, 4)})`], ['장소', f.place || f.addr], ['주소', f.place ? f.addr : ''],
     ['시간', f.playtime], ['요금', f.fee], ['주최', f.host], ['문의', f.tel]].filter(r => r[1]);
+  // 공식 홈페이지가 있으면 그쪽으로, 없으면 네이버 검색으로
+  const home = /^https?:\/\/[^\s"'<>()]+$/.test(f.homepage || '') ? f.homepage : '';
+  const naver = `https://search.naver.com/search.naver?query=${encodeURIComponent(f.title)}`;
   const d = $('#detail');
   d.innerHTML = `<div class="${im.cls} d-img" style="${im.style}">${im.text}<span class="badge ${st.cls}">${st.label}</span><button class="d-close" aria-label="닫기">✕</button></div>
     <div class="d-body"><div class="when">${esc(f._region)} ${esc(cityName(f))} · ${span(f)}</div><h2>${esc(f.title)}</h2>
@@ -210,10 +213,11 @@ function openDetail(id) {
       ${f.image && f.imageSource ? `<p class="credit">사진: ${f.imageLink ? `<a href="${esc(f.imageLink)}" target="_blank" rel="noopener">${esc(f.imageSource)}</a>` : esc(f.imageSource)}${f.imageLicense ? ` (${esc(f.imageLicense)})` : ''}${/^AI/.test(f.imageSource) ? ' — 실제 축제 사진이 아니에요' : /장소|지역|관련/.test(f.imageSource) ? ' — 축제 현장 사진이 아닐 수 있어요' : ''}</p>` : ''}
       <dl class="d-info">${rows.map(([k, v]) => `<dt>${k}</dt><dd>${esc(v)}</dd>`).join('')}</dl>
       <div class="d-btns">
-        ${f.homepage ? `<a class="primary" href="${esc(f.homepage)}" target="_blank" rel="noopener">공식 홈페이지 →</a>` : ''}
+        ${home ? `<a class="primary" href="${esc(home)}" target="_blank" rel="noopener">공식 홈페이지 →</a>`
+          : `<a class="primary" href="${naver}" target="_blank" rel="noopener">네이버에서 축제 검색 →</a>`}
         <a href="https://map.kakao.com/link/${f.lat ? `to/${label},${f.lat},${f.lng}` : `search/${wq}`}" target="_blank" rel="noopener">카카오맵 길찾기</a>
         <a href="https://map.naver.com/p/search/${wq}" target="_blank" rel="noopener">네이버 지도</a>
-      </div><a class="d-share" href="f/${esc(f.id)}.html">이 축제 페이지 열기 · 링크 공유</a></div>`;
+      </div><p class="d-links">${home ? `<a href="${naver}" target="_blank" rel="noopener">네이버 검색 결과</a><span>·</span>` : ''}<a href="f/${esc(f.id)}.html">축제 페이지 열기 · 링크 공유</a></p></div>`;
   d.showModal(); d.scrollTop = 0;
   d.querySelector('.d-close').onclick = () => d.close();
 }
